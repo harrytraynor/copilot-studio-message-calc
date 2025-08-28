@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Copilot Studio Message Cost Calculator</title>
+  <style>
+    :root{
+      --bg: #0b1220;
+      --card: #0f172a;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #2563eb;
+      --good: #10b981;
+      --bad: #ef4444;
+      --border: #1f2a44;
+    }
+    @media (prefers-color-scheme: light) {
+      :root{
+        --bg:#f7f8fb; --card:#ffffff; --muted:#475569; --text:#0f172a; --accent:#2563eb; --good:#059669; --bad:#dc2626; --border:#e2e8f0;
+      }
+    }
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background:radial-gradient(1200px 600px at 80% -10%, rgba(37,99,235,.15), transparent 60%), var(--bg);
+      color:var(--text); line-height:1.4;
+      display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .container{max-width:980px; width:100%;}
+    header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px}
+    h1{font-size: clamp(22px, 3vw, 32px); margin:0; letter-spacing:.2px}
+    .sub{color:var(--muted); font-size:14px}
+
+    .grid{display:grid; grid-template-columns: 1.2fr 1fr; gap:18px}
+    @media (max-width: 900px){ .grid{grid-template-columns: 1fr} }
+
+    .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow: 0 10px 24px rgba(2,6,23,.10)}
+    .card h2{font-size:16px; margin:0 0 10px}
+    .row{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    .row > .full{grid-column: 1 / -1}
+
+    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
+    input[type="number"], input[type="text"]{
+      width:100%; box-sizing:border-box; padding:12px 12px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--text);
+      outline:none; transition: border-color .15s ease, box-shadow .15s ease; font-size:14px;
+    }
+    input[type="number"]:focus, input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in hsl, var(--accent) 25%, transparent) }
+    .hint{font-size:12px; color:var(--muted)}
+
+    .switch{display:flex; align-items:center; gap:10px; user-select:none}
+    .switch input{appearance:none; width:40px; height:24px; background:#94a3b8; border-radius:999px; position:relative; outline:none; transition:background .2s}
+    .switch input::after{content:""; position:absolute; width:18px; height:18px; border-radius:50%; background:#fff; top:3px; left:3px; transition:left .2s}
+    .switch input:checked{background:var(--accent)}
+    .switch input:checked::after{left:19px}
+
+    .result{display:flex; align-items:center; justify-content:space-between; border:1px dashed var(--border); border-radius:12px; padding:12px 14px; margin-top:10px}
+    .result strong{font-size:18px}
+
+    .option{display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; padding:14px; border:1px solid var(--border); border-radius:12px; margin-top:12px}
+    .option h3{margin:0; font-size:15px}
+    .price{font-weight:700; font-size:18px}
+    .pm{font-size:12px; color:var(--muted)}
+    .good{border-color: color-mix(in hsl, var(--good) 60%, var(--border)); box-shadow: 0 6px 18px rgba(16,185,129,.15)}
+    .good .badge{background: color-mix(in hsl, var(--good) 25%, transparent); color: var(--good)}
+    .badge{font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid currentColor; justify-self:start}
+
+    details{margin-top:6px}
+    summary{cursor:pointer; font-size:13px; color:var(--accent)}
+
+    footer{margin-top:16px; color:var(--muted); font-size:12px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Copilot Studio – Message Cost Calculator</h1>
+        <div class="sub">Compare PAYG vs Message Packs. Prices are ex‑VAT. Buffer lets you plan headroom.</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Inputs -->
+      <section class="card" aria-labelledby="inputs">
+        <h2 id="inputs">Inputs</h2>
+        <div class="row">
+          <div>
+            <label for="messages">Projected messages (per month)</label>
+            <input id="messages" type="number" inputmode="numeric" min="0" step="1" value="50000" />
+          </div>
+          <div>
+            <label for="buffer">Buffer (%)</label>
+            <input id="buffer" type="number" inputmode="decimal" min="0" step="1" value="20" />
+          </div>
+          <div class="full">
+            <div class="switch"><input id="vat" type="checkbox" /><label for="vat">Include VAT (20%)</label></div>
+          </div>
+        </div>
+
+        <details>
+          <summary>Advanced pricing (edit if needed)</summary>
+          <div class="row" style="margin-top:10px">
+            <div>
+              <label for="payg">PAYG price per message (£)</label>
+              <input id="payg" type="number" inputmode="decimal" min="0" step="0.0001" value="0.008" />
+              <div class="hint">Assumes $0.01/msg ↦ ~£0.008 after FX.</div>
+            </div>
+            <div>
+              <label for="packPrice">Message pack price (£)</label>
+              <input id="packPrice" type="number" inputmode="decimal" min="0" step="0.01" value="153.80" />
+            </div>
+            <div>
+              <label for="packSize">Message pack size</label>
+              <input id="packSize" type="number" inputmode="numeric" min="1" step="1" value="25000" />
+            </div>
+            <div>
+              <label for="vatRate">VAT rate (%)</label>
+              <input id="vatRate" type="number" inputmode="decimal" min="0" step="0.1" value="20" />
+            </div>
+          </div>
+        </details>
+
+        <div class="result">
+          <div>Effective messages incl. buffer</div>
+          <strong class="mono" id="effective">–</strong>
+        </div>
+      </section>
+
+      <!-- Outputs -->
+      <section class="card" aria-labelledby="outputs">
+        <h2 id="outputs">Results</h2>
+        <div id="options"></div>
+        <div class="result">
+          <div>
+            Recommendation & savings
+            <div class="hint" id="why">—</div>
+          </div>
+          <strong id="recommend">—</strong>
+        </div>
+        <div style="margin-top:10px" class="row">
+          <div class="full">
+            <div class="hint">Breakeven point (where PAYG ≈ one pack): <span class="mono" id="breakeven">—</span> messages (ex‑VAT; same with VAT).</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <p>Assumptions: UK list prices (ex‑VAT). PAYG in GBP fluctuates with FX; adjust the per‑message value if needed. Packs are whole‑unit (ceil to full packs). “Buffer” multiplies your volume before pricing.
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    const GBP = new Intl.NumberFormat('en-GB', { style:'currency', currency:'GBP' });
+
+    const els = {
+      messages: document.getElementById('messages'),
+      buffer: document.getElementById('buffer'),
+      payg: document.getElementById('payg'),
+      packPrice: document.getElementById('packPrice'),
+      packSize: document.getElementById('packSize'),
+      vat: document.getElementById('vat'),
+      vatRate: document.getElementById('vatRate'),
+      effective: document.getElementById('effective'),
+      options: document.getElementById('options'),
+      recommend: document.getElementById('recommend'),
+      why: document.getElementById('why'),
+      breakeven: document.getElementById('breakeven')
+    };
+
+    const parse = (el, def=0) => {
+      const n = parseFloat(el.value);
+      return Number.isFinite(n) ? n : def;
+    };
+
+    function calc(){
+      const messages = Math.max(0, Math.floor(parse(els.messages)));
+      const bufferPct = Math.max(0, parse(els.buffer));
+      const paygRate = Math.max(0, parse(els.payg));
+      const packPrice = Math.max(0, parse(els.packPrice));
+      const packSize = Math.max(1, Math.floor(parse(els.packSize)));
+      const vatOn = els.vat.checked;
+      const vatRate = Math.max(0, parse(els.vatRate));
+
+      const eff = Math.ceil(messages * (1 + bufferPct/100));
+      const vatMult = vatOn ? (1 + vatRate/100) : 1;
+
+      // PAYG
+      const paygCost = eff * paygRate * vatMult;
+      const paygEffectivePerMsg = paygRate * vatMult;
+
+      // Packs
+      const packs = Math.ceil(eff / packSize);
+      const packCost = packs * packPrice * vatMult;
+      const packWaste = packs * packSize - eff;
+      const packEffectivePerMsg = packCost / eff;
+
+      // Breakeven (ex-VAT; VAT cancels)
+      const breakeven = paygRate > 0 ? Math.ceil(packPrice / paygRate) : Infinity;
+
+      els.effective.textContent = eff.toLocaleString('en-GB');
+      els.breakeven.textContent = Number.isFinite(breakeven) ? breakeven.toLocaleString('en-GB') : '—';
+
+      const bestIsPack = packCost < paygCost;
+      els.recommend.textContent = bestIsPack ? 'Buy Message Packs' : 'Use PAYG';
+      const saving = Math.abs(packCost - paygCost);
+      els.why.textContent = bestIsPack
+        ? `Saves ${GBP.format(saving)} vs PAYG this month.`
+        : `Saves ${GBP.format(saving)} vs Packs this month.`;
+
+      // Render options
+      els.options.innerHTML = '';
+      const frag = document.createDocumentFragment();
+
+      const makeRow = (title, price, perMsg, meta=[]) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'option' + ((bestIsPack && title==='Message Packs') || (!bestIsPack && title==='PAYG') ? ' good' : '');
+        const titleEl = document.createElement('h3');
+        titleEl.textContent = title;
+        wrap.appendChild(titleEl);
+        const priceEl = document.createElement('div');
+        priceEl.innerHTML = `<span class="price">${GBP.format(price)}</span> <span class="pm">/ month</span>`;
+        wrap.appendChild(priceEl);
+        const metaEl = document.createElement('div');
+        metaEl.className='hint';
+        metaEl.innerHTML = meta.join(' · ');
+        wrap.appendChild(metaEl);
+        const badge = document.createElement('div');
+        badge.className='badge';
+        badge.textContent = `≈ ${GBP.format(perMsg * 1000)} / 1k msgs`;
+        wrap.appendChild(badge);
+        frag.appendChild(wrap);
+      };
+
+      makeRow('PAYG', paygCost, paygEffectivePerMsg, [
+        `${eff.toLocaleString('en-GB')} msgs × ${GBP.format(paygRate)} each${vatOn?` + VAT`:''}`
+      ]);
+
+      makeRow('Message Packs', packCost, packEffectivePerMsg, [
+        `${packs} × ${GBP.format(packPrice)} pack${packs!==1?'s':''} (${packSize.toLocaleString('en-GB')} msgs each)${vatOn?` + VAT`:''}`,
+        packWaste>0?`${packWaste.toLocaleString('en-GB')} unused msgs this month`:'no unused messages'
+      ]);
+
+      els.options.appendChild(frag);
+    }
+
+    // Bind
+    [els.messages, els.buffer, els.payg, els.packPrice, els.packSize, els.vat, els.vatRate]
+      .forEach(el => el.addEventListener('input', calc));
+
+    calc();
+  </script>
+</body>
+</html>
