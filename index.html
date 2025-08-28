@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Copilot Studio Message Cost Calculator</title>
+  <title>Copilot Studio Message Cost & Agent Builder</title>
   <style>
     :root{
       --bg: #0b1220;
@@ -27,13 +27,19 @@
       color:var(--text); line-height:1.4;
       display:flex; align-items:center; justify-content:center; padding:24px;
     }
-    .container{max-width:980px; width:100%;}
-    header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px}
+    .container{max-width:1060px; width:100%;}
+
+    /* Tabs */
+    .tabs{display:flex; gap:8px; margin-bottom:16px}
+    .tab{appearance:none; background:transparent; color:var(--text); border:1px solid var(--border); padding:10px 14px; border-radius:999px; cursor:pointer; font-weight:600}
+    .tab[aria-selected="true"]{background:color-mix(in hsl, var(--accent) 20%, transparent); border-color:color-mix(in hsl, var(--accent) 40%, var(--border));}
+
+    header{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:12px}
     h1{font-size: clamp(22px, 3vw, 32px); margin:0; letter-spacing:.2px}
     .sub{color:var(--muted); font-size:14px}
 
     .grid{display:grid; grid-template-columns: 1.2fr 1fr; gap:18px}
-    @media (max-width: 900px){ .grid{grid-template-columns: 1fr} }
+    @media (max-width: 980px){ .grid{grid-template-columns: 1fr} }
 
     .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow: 0 10px 24px rgba(2,6,23,.10)}
     .card h2{font-size:16px; margin:0 0 10px}
@@ -41,11 +47,11 @@
     .row > .full{grid-column: 1 / -1}
 
     label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
-    input[type="number"], input[type="text"]{
+    input[type="number"], input[type="text"], select{
       width:100%; box-sizing:border-box; padding:12px 12px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--text);
       outline:none; transition: border-color .15s ease, box-shadow .15s ease; font-size:14px;
     }
-    input[type="number"]:focus, input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in hsl, var(--accent) 25%, transparent) }
+    input[type="number"]:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in hsl, var(--accent) 25%, transparent) }
     .hint{font-size:12px; color:var(--muted)}
 
     .switch{display:flex; align-items:center; gap:10px; user-select:none}
@@ -54,7 +60,7 @@
     .switch input:checked{background:var(--accent)}
     .switch input:checked::after{left:19px}
 
-    .result{display:flex; align-items:center; justify-content:space-between; border:1px dashed var(--border); border-radius:12px; padding:12px 14px; margin-top:10px}
+    .result{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; border:1px dashed var(--border); border-radius:12px; padding:14px 16px; margin-top:10px}
     .result strong{font-size:18px}
 
     .option{display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; padding:14px; border:1px solid var(--border); border-radius:12px; margin-top:12px}
@@ -69,93 +75,226 @@
     summary{cursor:pointer; font-size:13px; color:var(--accent)}
 
     footer{margin-top:16px; color:var(--muted); font-size:12px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+
+    /* Recommendation card spacing */
+    .recommend{display:grid; grid-template-columns: 1fr auto; gap:4px 16px; align-items:center; border:1px solid var(--border); border-radius:14px; padding:16px; margin-top:12px; background:linear-gradient(180deg, color-mix(in hsl, var(--accent) 10%, transparent), transparent)}
+    .recommend h3{margin:0; font-size:15px}
+    .recommend .big{font-size:20px; font-weight:800}
+    .recommend .muted{color:var(--muted); font-size:12px}
+
+    /* Agent builder */
+    .flow-grid{display:grid; grid-template-columns: 1fr 1fr; gap:18px}
+    @media (max-width: 980px){ .flow-grid{grid-template-columns: 1fr} }
+    .actions{display:flex; gap:8px}
+    .btn{appearance:none; border:1px solid var(--border); background:transparent; padding:10px 12px; border-radius:10px; color:var(--text); cursor:pointer}
+    .btn:hover{box-shadow:0 2px 10px rgba(2,6,23,.12)}
+    .btn.primary{border-color: color-mix(in hsl, var(--accent) 40%, var(--border)); background: color-mix(in hsl, var(--accent) 16%, transparent)}
+    .btn[data-action="delete"]{border-color: color-mix(in hsl, var(--bad) 40%, var(--border)); color: var(--bad)}
+    .hidden{display:none}
+
+    /* Agent nodes – minimal, cleaner UI */
+    .flow-canvas{position:relative; display:flex; flex-direction:column; gap:12px}
+    /* single connector behind nodes */
+    .flow-canvas::before{content:""; position:absolute; left:31px; top:8px; bottom:8px; width:2px; background:var(--border); z-index:0}
+
+    .flow-node{position:relative; z-index:1; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; padding:14px 16px; border:1px solid var(--border); border-radius:14px; background:var(--card)}
+    .flow-node:hover{box-shadow:0 4px 14px rgba(2,6,23,.12)}
+
+    /* the only colourful element */
+    .flow-node .pill{width:30px; height:30px; border-radius:999px; display:grid; place-items:center; font-weight:800; color:#fff; background: var(--node-accent, #334155)}
+    .flow-node h4{margin:0; font-size:14px}
+    .flow-node .meta{font-size:12px; color:var(--muted)}
+    .flow-node .node-badges{display:flex; gap:6px; margin-top:6px}
+    .node-badge{font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--muted)}
+    .node-actions{display:flex; gap:6px}
+
+    /* Type accent variables – used only for the pill */
+    .t-classic{ --node-accent:#16a34a }
+    .t-generative{ --node-accent:#f59e0b }
+    .t-tenant{ --node-accent:#2563eb }
+    .t-flow{ --node-accent:#ea580c }
+    .t-toolBasic{ --node-accent:#64748b }
+    .t-toolStandard{ --node-accent:#8b5cf6 }
+    .t-toolPremium{ --node-accent:#ef4444 }
+    .t-web{ --node-accent:#334155 }
+
+    .flow-node.selected{outline:2px solid color-mix(in hsl, var(--accent) 50%, transparent)}
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <div>
-        <h1>Copilot Studio – Message Cost Calculator</h1>
-        <div class="sub">Compare PAYG vs Message Packs. Prices are ex‑VAT. Buffer lets you plan headroom.</div>
+        <h1>Copilot Studio – Message Cost & Agent Builder</h1>
+        <div class="sub">Compare PAYG vs Packs, or model an agent to auto‑populate volumes. Prices are ex‑VAT.</div>
       </div>
     </header>
 
-    <div class="grid">
-      <!-- Inputs -->
-      <section class="card" aria-labelledby="inputs">
-        <h2 id="inputs">Inputs</h2>
-        <div class="row">
-          <div>
-            <label for="messages">Projected messages (per month)</label>
-            <input id="messages" type="number" inputmode="numeric" min="0" step="1" value="50000" />
-          </div>
-          <div>
-            <label for="buffer">Buffer (%)</label>
-            <input id="buffer" type="number" inputmode="decimal" min="0" step="1" value="20" />
-          </div>
-          <div class="full">
-            <div class="switch"><input id="vat" type="checkbox" /><label for="vat">Include VAT (20%)</label></div>
-          </div>
-        </div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" id="tab-calc" aria-controls="view-calc" aria-selected="true">Calculator</button>
+      <button class="tab" role="tab" id="tab-flow" aria-controls="view-flow" aria-selected="false">Agent Builder</button>
+    </nav>
 
-        <details>
-          <summary>Advanced pricing (edit if needed)</summary>
-          <div class="row" style="margin-top:10px">
+    <!-- CALCULATOR VIEW -->
+    <section id="view-calc" role="tabpanel" aria-labelledby="tab-calc">
+      <div class="grid">
+        <!-- Inputs -->
+        <section class="card" aria-labelledby="inputs">
+          <h2 id="inputs">Inputs</h2>
+          <div class="row">
             <div>
-              <label for="payg">PAYG price per message (£)</label>
-              <input id="payg" type="number" inputmode="decimal" min="0" step="0.0001" value="0.008" />
-              <div class="hint">Assumes $0.01/msg ↦ ~£0.008 after FX.</div>
+              <label for="messages">Projected messages (per month)</label>
+              <input id="messages" type="number" inputmode="numeric" min="0" step="1" value="50000" />
             </div>
             <div>
-              <label for="packPrice">Message pack price (£)</label>
-              <input id="packPrice" type="number" inputmode="decimal" min="0" step="0.01" value="153.80" />
+              <label for="buffer">Buffer (%)</label>
+              <input id="buffer" type="number" inputmode="decimal" min="0" step="1" value="20" />
+            </div>
+            <div class="full">
+              <div class="switch"><input id="vat" type="checkbox" /><label for="vat">Include VAT (20%)</label></div>
+            </div>
+          </div>
+
+          <details>
+            <summary>Advanced pricing (edit if needed)</summary>
+            <div class="row" style="margin-top:10px">
+              <div>
+                <label for="payg">PAYG price per message (£)</label>
+                <input id="payg" type="number" inputmode="decimal" min="0" step="0.0001" value="0.008" />
+                <div class="hint">Assumes $0.01/msg ↦ ~£0.008 after FX.</div>
+              </div>
+              <div>
+                <label for="packPrice">Message pack price (£)</label>
+                <input id="packPrice" type="number" inputmode="decimal" min="0" step="0.01" value="153.80" />
+              </div>
+              <div>
+                <label for="packSize">Message pack size</label>
+                <input id="packSize" type="number" inputmode="numeric" min="1" step="1" value="25000" />
+              </div>
+              <div>
+                <label for="vatRate">VAT rate (%)</label>
+                <input id="vatRate" type="number" inputmode="decimal" min="0" step="0.1" value="20" />
+              </div>
+            </div>
+          </details>
+
+          <div class="result">
+            <div>Effective messages incl. buffer</div>
+            <strong class="mono" id="effective">–</strong>
+          </div>
+        </section>
+
+        <!-- Outputs -->
+        <section class="card" aria-labelledby="outputs">
+          <h2 id="outputs">Results</h2>
+          <div id="options"></div>
+
+          <div class="recommend" id="recCard">
+            <div>
+              <h3>Recommendation</h3>
+              <div class="muted" id="why">—</div>
+            </div>
+            <div class="big" id="recommend">—</div>
+          </div>
+
+          <div style="margin-top:10px" class="row">
+            <div class="full">
+              <div class="hint">Breakeven (PAYG ≈ one pack): <span class="mono" id="breakeven">—</span> messages (VAT cancels).</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        <p>Assumptions: UK list prices (ex‑VAT). PAYG in GBP fluctuates with FX; adjust per‑message if needed. Packs are whole‑unit (ceil to full packs). “Buffer” multiplies your volume before pricing.</p>
+      </footer>
+    </section>
+
+    <!-- AGENT BUILDER VIEW -->
+    <section id="view-flow" class="hidden" role="tabpanel" aria-labelledby="tab-flow">
+      <div class="flow-grid">
+        <!-- Canvas -->
+        <section class="card">
+          <h2>Agent builder</h2>
+          <div id="canvas" class="flow-canvas"></div>
+          <div class="result">
+            <div>Messages per run</div>
+            <strong class="mono" id="perRun">0.000</strong>
+          </div>
+        </section>
+
+        <!-- Inspector / Add panel -->
+        <section class="card">
+          <h2>Inspector</h2>
+          <div class="row">
+            <div class="full">
+              <label for="nodeName">Step name</label>
+              <input id="nodeName" placeholder="e.g., Retrieve policy" />
             </div>
             <div>
-              <label for="packSize">Message pack size</label>
-              <input id="packSize" type="number" inputmode="numeric" min="1" step="1" value="25000" />
+              <label for="nodeType">Type</label>
+              <select id="nodeType">
+                <option value="classic">Classic answer (+1)</option>
+                <option value="generative">Generative answer (+2)</option>
+                <option value="tenant">Tenant‑graph grounding (+10)</option>
+                <option value="flow">Agent flow (invoke + actions)</option>
+                <option value="toolBasic">AI tool – Basic (+0.1 each)</option>
+                <option value="toolStandard">AI tool – Standard (+1.5 each)</option>
+                <option value="toolPremium">AI tool – Premium (+10 each)</option>
+                <option value="web">Web‑grounded (0)</option>
+              </select>
             </div>
             <div>
-              <label for="vatRate">VAT rate (%)</label>
-              <input id="vatRate" type="number" inputmode="decimal" min="0" step="0.1" value="20" />
+              <label for="nodeQty">Quantity</label>
+              <input id="nodeQty" type="number" min="1" step="1" value="1" />
+            </div>
+            <div id="flowActionsWrap" class="full">
+              <label for="flowActions">Actions inside flow (per run)</label>
+              <input id="flowActions" type="number" min="0" step="1" value="3" />
+              <div class="hint">Message calc for flow: <span class="mono">qty × (5 + 0.13 × actions)</span></div>
+            </div>
+            <div class="full actions">
+              <button id="addOrUpdateNode" class="btn primary">Add step</button>
+              <button id="duplicateNode" class="btn">Duplicate</button>
+              <button id="deleteNode" class="btn" data-action="delete">Delete</button>
+              <button id="moveUp" class="btn">Move up</button>
+              <button id="moveDown" class="btn">Move down</button>
             </div>
           </div>
-        </details>
 
-        <div class="result">
-          <div>Effective messages incl. buffer</div>
-          <strong class="mono" id="effective">–</strong>
-        </div>
-      </section>
-
-      <!-- Outputs -->
-      <section class="card" aria-labelledby="outputs">
-        <h2 id="outputs">Results</h2>
-        <div id="options"></div>
-        <div class="result">
-          <div>
-            Recommendation & savings
-            <div class="hint" id="why">—</div>
+          <h2 style="margin-top:14px">Volume from agent</h2>
+          <div class="row">
+            <div>
+              <label for="runs">Expected runs per month</label>
+              <input id="runs" type="number" min="0" step="1" value="1000" />
+            </div>
+            <div>
+              <label for="flowBuffer">Buffer (%)</label>
+              <input id="flowBuffer" type="number" min="0" step="1" value="20" />
+            </div>
           </div>
-          <strong id="recommend">—</strong>
-        </div>
-        <div style="margin-top:10px" class="row">
-          <div class="full">
-            <div class="hint">Breakeven point (where PAYG ≈ one pack): <span class="mono" id="breakeven">—</span> messages (ex‑VAT; same with VAT).</div>
+          <div class="result">
+            <div>Total messages (before buffer)</div>
+            <strong class="mono" id="totalMsgs">0</strong>
           </div>
-        </div>
-      </section>
-    </div>
-
-    <footer>
-      <p>Assumptions: UK list prices (ex‑VAT). PAYG in GBP fluctuates with FX; adjust the per‑message value if needed. Packs are whole‑unit (ceil to full packs). “Buffer” multiplies your volume before pricing.
-      </p>
-    </footer>
+          <div class="result">
+            <div>Effective messages incl. buffer</div>
+            <strong class="mono" id="effectiveFlow">0</strong>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button id="pushToCalc" class="btn primary">Send to Calculator</button>
+          </div>
+          <p class="hint" style="margin-top:10px">The agent view auto-syncs the Calculator's message and buffer fields.</p>
+        </section>
+      </div>
+    </section>
   </div>
 
   <script>
     const GBP = new Intl.NumberFormat('en-GB', { style:'currency', currency:'GBP' });
 
+    // ======== Shared els for Calculator ========
     const els = {
       messages: document.getElementById('messages'),
       buffer: document.getElementById('buffer'),
@@ -168,7 +307,8 @@
       options: document.getElementById('options'),
       recommend: document.getElementById('recommend'),
       why: document.getElementById('why'),
-      breakeven: document.getElementById('breakeven')
+      breakeven: document.getElementById('breakeven'),
+      recCard: document.getElementById('recCard')
     };
 
     const parse = (el, def=0) => {
@@ -267,11 +407,190 @@
       els.options.appendChild(frag);
     }
 
-    // Bind
+    // Bind calculator inputs
     [els.messages, els.buffer, els.payg, els.packPrice, els.packSize, els.vat, els.vatRate]
       .forEach(el => el.addEventListener('input', calc));
 
+    // ======== Tabs ========
+    const tabCalc = document.getElementById('tab-calc');
+    const tabFlow = document.getElementById('tab-flow');
+    const viewCalc = document.getElementById('view-calc');
+    const viewFlow = document.getElementById('view-flow');
+    function switchTab(which){
+      const isCalc = which==='calc';
+      tabCalc.setAttribute('aria-selected', isCalc);
+      tabFlow.setAttribute('aria-selected', !isCalc);
+      viewCalc.classList.toggle('hidden', !isCalc);
+      viewFlow.classList.toggle('hidden', isCalc);
+    }
+    tabCalc.addEventListener('click', ()=>switchTab('calc'));
+    tabFlow.addEventListener('click', ()=>switchTab('flow'));
+
+    // ======== Agent builder logic ========
+    const canvas = document.getElementById('canvas');
+    const nodeName = document.getElementById('nodeName');
+    const nodeType = document.getElementById('nodeType');
+    const nodeQty = document.getElementById('nodeQty');
+    const flowActionsWrap = document.getElementById('flowActionsWrap');
+    const flowActions = document.getElementById('flowActions');
+    const addOrUpdateNode = document.getElementById('addOrUpdateNode');
+    const duplicateNode = document.getElementById('duplicateNode');
+    const deleteNode = document.getElementById('deleteNode');
+    const moveUp = document.getElementById('moveUp');
+    const moveDown = document.getElementById('moveDown');
+    const perRun = document.getElementById('perRun');
+    const runs = document.getElementById('runs');
+    const flowBuffer = document.getElementById('flowBuffer');
+    const totalMsgs = document.getElementById('totalMsgs');
+    const effectiveFlow = document.getElementById('effectiveFlow');
+    const pushToCalc = document.getElementById('pushToCalc');
+
+    let nodes = [];
+    let selected = -1;
+    let uid = 0;
+
+    const typeToRate = (t, actions=0) => ({
+      classic: 1,
+      generative: 2,
+      tenant: 10,
+      flow: 5 + (0.13 * actions),
+      toolBasic: 0.1,
+      toolStandard: 1.5,
+      toolPremium: 10,
+      web: 0
+    })[t] ?? 0;
+
+    const typeLabel = (t) => ({
+      classic:'Classic', generative:'Generative', tenant:'Tenant‑graph', flow:'Agent flow', toolBasic:'AI tool (Basic)', toolStandard:'AI tool (Standard)', toolPremium:'AI tool (Premium)', web:'Web‑grounded'
+    })[t] ?? t;
+
+    function showFlowActions(){
+      flowActionsWrap.style.display = (nodeType.value === 'flow') ? 'block' : 'none';
+    }
+    nodeType.addEventListener('change', showFlowActions);
+    showFlowActions();
+
+    function nodeMsgs(n){
+      const rate = typeToRate(n.type, n.actions||0);
+      return +(rate * n.qty).toFixed(3);
+    }
+
+    function renderNodes(){
+      canvas.innerHTML='';
+      nodes.forEach((n,i)=>{
+        const node = document.createElement('div');
+        node.className = `flow-node t-${n.type}` + (i===selected?' selected':'');
+        node.dataset.i = i;
+        node.innerHTML = `
+          <div class="pill">${i+1}</div>
+          <div>
+            <h4>${n.name || typeLabel(n.type)}</h4>
+            <div class="meta">${typeLabel(n.type)}${n.type==='flow'?` • ${n.actions} actions`:''} • qty ${n.qty} • ${nodeMsgs(n)} msgs</div>
+            <div class="node-badges">
+              <span class="node-badge">rate ${typeToRate(n.type, n.actions||0)}</span>
+            </div>
+          </div>
+          <div class="node-actions">
+            <button class="btn" data-action="edit">Edit</button>
+            <button class="btn" data-action="delete">Delete</button>
+          </div>`;
+        canvas.appendChild(node);
+      });
+
+      // Totals
+      let perRunTotal = nodes.reduce((s,n)=>s+nodeMsgs(n),0);
+      perRun.textContent = perRunTotal.toFixed(3);
+
+      const runsVal = Math.max(0, Math.floor(parseFloat(runs.value)||0));
+      const total = Math.ceil(perRunTotal * runsVal);
+      totalMsgs.textContent = total.toLocaleString('en-GB');
+
+      const b = Math.max(0, parseFloat(flowBuffer.value)||0);
+      const eff = Math.ceil(total * (1 + b/100));
+      effectiveFlow.textContent = eff.toLocaleString('en-GB');
+
+      // Sync calculator
+      els.messages.value = total;
+      els.buffer.value = b;
+      calc();
+    }
+
+    function clearInspector(){
+      selected = -1;
+      nodeName.value='';
+      nodeType.value='classic';
+      nodeQty.value='1';
+      flowActions.value='3';
+      addOrUpdateNode.textContent='Add step';
+      showFlowActions();
+    }
+
+    function loadInspector(i){
+      const n = nodes[i]; if(!n) return;
+      selected = i;
+      nodeName.value = n.name || '';
+      nodeType.value = n.type;
+      nodeQty.value = n.qty;
+      flowActions.value = n.actions || 0;
+      addOrUpdateNode.textContent='Update step';
+      showFlowActions();
+    }
+
+    // Canvas click handling
+    canvas.addEventListener('click', (e)=>{
+      const wrap = e.target.closest('.flow-node');
+      if(!wrap) return;
+      const i = Number(wrap.dataset.i);
+      const action = e.target.dataset.action;
+      if(action==='delete'){ nodes.splice(i,1); clearInspector(); renderNodes(); return; }
+      loadInspector(i);
+      renderNodes();
+    });
+
+    addOrUpdateNode.addEventListener('click', ()=>{
+      const n = {
+        id: ++uid,
+        name: nodeName.value.trim(),
+        type: nodeType.value,
+        qty: Math.max(1, Math.floor(parseFloat(nodeQty.value)||1)),
+        actions: Math.max(0, Math.floor(parseFloat(flowActions.value)||0))
+      };
+      if(selected>=0){
+        nodes[selected] = n;
+      } else {
+        nodes.push(n);
+      }
+      renderNodes();
+      clearInspector();
+    });
+
+    duplicateNode.addEventListener('click', ()=>{
+      if(selected<0) return;
+      const base = nodes[selected];
+      nodes.splice(selected+1,0,{...base,id:++uid});
+      renderNodes();
+    });
+
+    deleteNode.addEventListener('click', ()=>{
+      if(selected<0) return;
+      nodes.splice(selected,1); clearInspector(); renderNodes();
+    });
+
+    moveUp.addEventListener('click', ()=>{
+      if(selected<=0) return; const i=selected; [nodes[i-1],nodes[i]]=[nodes[i],nodes[i-1]]; selected=i-1; renderNodes();
+    });
+    moveDown.addEventListener('click', ()=>{
+      if(selected<0 || selected>=nodes.length-1) return; const i=selected; [nodes[i],nodes[i+1]]=[nodes[i+1],nodes[i]]; selected=i+1; renderNodes();
+    });
+
+    [runs, flowBuffer].forEach(el=>el.addEventListener('input', renderNodes));
+    nodeType.addEventListener('change', showFlowActions);
+
+    pushToCalc.addEventListener('click', ()=>{ switchTab('calc'); });
+
+    // Initial render
     calc();
+    renderNodes();
   </script>
 </body>
 </html>
