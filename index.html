@@ -198,18 +198,33 @@
       const packWaste = packs * packSize - eff;
       const packEffectivePerMsg = packCost / eff;
 
+      // Hybrid (Packs + PAYG for overspill)
+      const packsFloor = Math.floor(eff / packSize);
+      const remainder = eff - packsFloor * packSize;
+      const remainderCostPayg = remainder * paygRate * vatMult;
+      const onePackCost = packPrice * vatMult;
+      const remainderStrategy = remainder === 0 ? 'none' : (remainderCostPayg <= onePackCost ? 'PAYG' : 'Pack');
+      const hybridPacks = packsFloor + (remainder > 0 && remainderStrategy === 'Pack' ? 1 : 0);
+      const hybridCost = (packsFloor * packPrice * vatMult) + (remainder === 0 ? 0 : Math.min(remainderCostPayg, onePackCost));
+      const hybridWaste = remainderStrategy === 'Pack' ? (packSize - remainder) : 0;
+      const hybridEffectivePerMsg = hybridCost / eff;
+
       // Breakeven (ex-VAT; VAT cancels)
       const breakeven = paygRate > 0 ? Math.ceil(packPrice / paygRate) : Infinity;
 
       els.effective.textContent = eff.toLocaleString('en-GB');
       els.breakeven.textContent = Number.isFinite(breakeven) ? breakeven.toLocaleString('en-GB') : '—';
 
-      const bestIsPack = packCost < paygCost;
-      els.recommend.textContent = bestIsPack ? 'Buy Message Packs' : 'Use PAYG';
-      const saving = Math.abs(packCost - paygCost);
-      els.why.textContent = bestIsPack
-        ? `Saves ${GBP.format(saving)} vs PAYG this month.`
-        : `Saves ${GBP.format(saving)} vs Packs this month.`;
+      const optionsArr = [
+        { key: 'PAYG', title: 'PAYG', cost: paygCost, perMsg: paygEffectivePerMsg },
+        { key: 'Packs', title: 'Message Packs', cost: packCost, perMsg: packEffectivePerMsg },
+        { key: 'Hybrid', title: 'Hybrid (Packs + PAYG)', cost: hybridCost, perMsg: hybridEffectivePerMsg }
+      ].sort((a,b)=>a.cost-b.cost);
+
+      const best = optionsArr[0];
+      const second = optionsArr[1] ?? optionsArr[0];
+      els.recommend.textContent = best.title;
+      els.why.textContent = `Saves ${GBP.format(second.cost - best.cost)} vs ${second.title} this month.`;
 
       // Render options
       els.options.innerHTML = '';
@@ -217,7 +232,7 @@
 
       const makeRow = (title, price, perMsg, meta=[]) => {
         const wrap = document.createElement('div');
-        wrap.className = 'option' + ((bestIsPack && title==='Message Packs') || (!bestIsPack && title==='PAYG') ? ' good' : '');
+        wrap.className = 'option' + (title===best.title ? ' good' : '');
         const titleEl = document.createElement('h3');
         titleEl.textContent = title;
         wrap.appendChild(titleEl);
@@ -242,6 +257,11 @@
       makeRow('Message Packs', packCost, packEffectivePerMsg, [
         `${packs} × ${GBP.format(packPrice)} pack${packs!==1?'s':''} (${packSize.toLocaleString('en-GB')} msgs each)${vatOn?` + VAT`:''}`,
         packWaste>0?`${packWaste.toLocaleString('en-GB')} unused msgs this month`:'no unused messages'
+      ]);
+
+      makeRow('Hybrid (Packs + PAYG)', hybridCost, hybridEffectivePerMsg, [
+        `${hybridPacks} × ${GBP.format(packPrice)} pack${hybridPacks!==1?'s':''}${remainder>0 ? (remainderStrategy==='PAYG' ? ` + ${remainder.toLocaleString('en-GB')} msgs via PAYG` : ' (overspill covered by extra pack)') : ''}${vatOn?` + VAT`:''}`,
+        hybridWaste>0?`${hybridWaste.toLocaleString('en-GB')} unused msgs this month`:'no unused messages'
       ]);
 
       els.options.appendChild(frag);
