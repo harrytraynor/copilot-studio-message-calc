@@ -263,29 +263,17 @@
             </div>
           </div>
 
-          <h2 style="margin-top:14px">Volume from agent</h2>
+          <h2 style="margin-top:14px">Expected volume</h2>
           <div class="row">
-            <div>
-              <label for="runs">Expected runs per month</label>
-              <input id="runs" type="number" min="0" step="1" value="1000" />
+            <div class="full">
+              <label for="expectedVolume">Expected runs per month</label>
+              <input id="expectedVolume" type="number" min="0" step="1" value="1000" />
             </div>
-            <div>
-              <label for="flowBuffer">Buffer (%)</label>
-              <input id="flowBuffer" type="number" min="0" step="1" value="20" />
-            </div>
-          </div>
-          <div class="result">
-            <div>Total messages (before buffer)</div>
-            <strong class="mono" id="totalMsgs">0</strong>
-          </div>
-          <div class="result">
-            <div>Effective messages incl. buffer</div>
-            <strong class="mono" id="effectiveFlow">0</strong>
           </div>
           <div class="actions" style="margin-top:12px">
             <button id="pushToCalc" class="btn primary">Send to Calculator</button>
           </div>
-          <p class="hint" style="margin-top:10px">The agent view auto-syncs the Calculator's message and buffer fields.</p>
+          <p class="hint" style="margin-top:10px">The agent view auto-syncs the Calculator's messages field.</p>
         </section>
       </div>
     </section>
@@ -439,10 +427,7 @@
     const moveUp = document.getElementById('moveUp');
     const moveDown = document.getElementById('moveDown');
     const perRun = document.getElementById('perRun');
-    const runs = document.getElementById('runs');
-    const flowBuffer = document.getElementById('flowBuffer');
-    const totalMsgs = document.getElementById('totalMsgs');
-    const effectiveFlow = document.getElementById('effectiveFlow');
+    const expectedVolume = document.getElementById('expectedVolume');
     const pushToCalc = document.getElementById('pushToCalc');
 
     let nodes = [];
@@ -501,17 +486,10 @@
       let perRunTotal = nodes.reduce((s,n)=>s+nodeMsgs(n),0);
       perRun.textContent = perRunTotal.toFixed(3);
 
-      const runsVal = Math.max(0, Math.floor(parseFloat(runs.value)||0));
-      const total = Math.ceil(perRunTotal * runsVal);
-      totalMsgs.textContent = total.toLocaleString('en-GB');
-
-      const b = Math.max(0, parseFloat(flowBuffer.value)||0);
-      const eff = Math.ceil(total * (1 + b/100));
-      effectiveFlow.textContent = eff.toLocaleString('en-GB');
-
-      // Sync calculator
-      els.messages.value = total;
-      els.buffer.value = b;
+      // Sync calculator: total monthly messages = perRun * expected runs
+      const expected = Math.max(0, Math.floor(parseFloat(expectedVolume.value)||0));
+      const totalMonthly = Math.ceil(perRunTotal * expected);
+      els.messages.value = totalMonthly;
       calc();
     }
 
@@ -583,7 +561,7 @@
       if(selected<0 || selected>=nodes.length-1) return; const i=selected; [nodes[i],nodes[i+1]]=[nodes[i+1],nodes[i]]; selected=i+1; renderNodes();
     });
 
-    [runs, flowBuffer].forEach(el=>el.addEventListener('input', renderNodes));
+    [expectedVolume].forEach(el=>el.addEventListener('input', renderNodes));
     nodeType.addEventListener('change', showFlowActions);
 
     pushToCalc.addEventListener('click', ()=>{ switchTab('calc'); });
