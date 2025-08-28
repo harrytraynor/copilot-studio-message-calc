@@ -20,12 +20,12 @@
         --bg:#f7f8fb; --card:#ffffff; --muted:#475569; --text:#0f172a; --accent:#2563eb; --good:#059669; --bad:#dc2626; --border:#e2e8f0;
       }
     }
-    html,body{height:100%}
+    html,body{min-height:100%}
     body{
       margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
       background:radial-gradient(1200px 600px at 80% -10%, rgba(37,99,235,.15), transparent 60%), var(--bg);
       color:var(--text); line-height:1.4;
-      display:flex; align-items:center; justify-content:center; padding:24px;
+      display:flex; align-items:flex-start; justify-content:center; padding:24px; min-height:100vh;
     }
     .container{max-width:1060px; width:100%;}
 
