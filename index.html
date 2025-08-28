@@ -4,130 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Copilot Studio Message Cost & Agent Builder</title>
-  <style>
-    :root{
-      --bg: #0b1220;
-      --card: #0f172a;
-      --muted: #94a3b8;
-      --text: #e5e7eb;
-      --accent: #2563eb;
-      --good: #10b981;
-      --bad: #ef4444;
-      --border: #1f2a44;
-    }
-    @media (prefers-color-scheme: light) {
-      :root{
-        --bg:#f7f8fb; --card:#ffffff; --muted:#475569; --text:#0f172a; --accent:#2563eb; --good:#059669; --bad:#dc2626; --border:#e2e8f0;
-      }
-    }
-    html,body{min-height:100%}
-    body{
-      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background:radial-gradient(1200px 600px at 80% -10%, rgba(37,99,235,.15), transparent 60%), var(--bg);
-      color:var(--text); line-height:1.4;
-      display:flex; align-items:flex-start; justify-content:center; padding:24px; min-height:100vh;
-    }
-    .container{max-width:1060px; width:100%;}
-
-    /* Tabs */
-    .tabs{display:flex; gap:8px; margin-bottom:16px}
-    .tab{appearance:none; background:transparent; color:var(--text); border:1px solid var(--border); padding:10px 14px; border-radius:999px; cursor:pointer; font-weight:600}
-    .tab[aria-selected="true"]{background:color-mix(in hsl, var(--accent) 20%, transparent); border-color:color-mix(in hsl, var(--accent) 40%, var(--border));}
-
-    header{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:12px}
-    h1{font-size: clamp(22px, 3vw, 32px); margin:0; letter-spacing:.2px}
-    .sub{color:var(--muted); font-size:14px}
-
-    .grid{display:grid; grid-template-columns: 1.2fr 1fr; gap:18px}
-    @media (max-width: 980px){ .grid{grid-template-columns: 1fr} }
-
-    .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow: 0 10px 24px rgba(2,6,23,.10)}
-    .card h2{font-size:16px; margin:0 0 10px}
-    .row{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
-    .row > .full{grid-column: 1 / -1}
-
-    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
-    input[type="number"], input[type="text"], select{
-      width:100%; box-sizing:border-box; padding:12px 12px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--text);
-      outline:none; transition: border-color .15s ease, box-shadow .15s ease; font-size:14px;
-    }
-    input[type="number"]:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in hsl, var(--accent) 25%, transparent) }
-    .hint{font-size:12px; color:var(--muted)}
-
-    .switch{display:flex; align-items:center; gap:10px; user-select:none}
-    .switch input{appearance:none; width:40px; height:24px; background:#94a3b8; border-radius:999px; position:relative; outline:none; transition:background .2s}
-    .switch input::after{content:""; position:absolute; width:18px; height:18px; border-radius:50%; background:#fff; top:3px; left:3px; transition:left .2s}
-    .switch input:checked{background:var(--accent)}
-    .switch input:checked::after{left:19px}
-
-    .result{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; border:1px dashed var(--border); border-radius:12px; padding:14px 16px; margin-top:10px}
-    .result strong{font-size:18px}
-
-    .option{display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; padding:14px; border:1px solid var(--border); border-radius:12px; margin-top:12px}
-    .option h3{margin:0; font-size:15px}
-    .price{font-weight:700; font-size:18px}
-    .pm{font-size:12px; color:var(--muted)}
-    .good{border-color: color-mix(in hsl, var(--good) 60%, var(--border)); box-shadow: 0 6px 18px rgba(16,185,129,.15)}
-    .good .badge{background: color-mix(in hsl, var(--good) 25%, transparent); color: var(--good)}
-    .badge{font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid currentColor; justify-self:start}
-
-    details{margin-top:6px}
-    summary{cursor:pointer; font-size:13px; color:var(--accent)}
-
-    footer{margin-top:16px; color:var(--muted); font-size:12px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
-
-    /* Recommendation card spacing */
-    .recommend{display:grid; grid-template-columns: 1fr auto; gap:4px 16px; align-items:center; border:1px solid var(--border); border-radius:14px; padding:16px; margin-top:12px; background:linear-gradient(180deg, color-mix(in hsl, var(--accent) 10%, transparent), transparent)}
-    .recommend h3{margin:0; font-size:15px}
-    .recommend .big{font-size:20px; font-weight:800}
-    .recommend .muted{color:var(--muted); font-size:12px}
-
-    /* Agent builder */
-    .flow-grid{display:grid; grid-template-columns: 1fr 1fr; gap:18px}
-    @media (max-width: 980px){ .flow-grid{grid-template-columns: 1fr} }
-    .actions{display:flex; gap:8px}
-    .btn{appearance:none; border:1px solid var(--border); background:transparent; padding:10px 12px; border-radius:10px; color:var(--text); cursor:pointer}
-    .btn:hover{box-shadow:0 2px 10px rgba(2,6,23,.12)}
-    .btn.primary{border-color: color-mix(in hsl, var(--accent) 40%, var(--border)); background: color-mix(in hsl, var(--accent) 16%, transparent)}
-    .btn[data-action="delete"]{border-color: color-mix(in hsl, var(--bad) 40%, var(--border)); color: var(--bad)}
-    .hidden{display:none}
-
-    /* Agent nodes – minimal, cleaner UI */
-    .flow-canvas{position:relative; display:flex; flex-direction:column; gap:12px}
-    /* single connector behind nodes */
-    .flow-canvas::before{content:""; position:absolute; left:31px; top:8px; bottom:8px; width:2px; background:var(--border); z-index:0}
-
-    .flow-node{position:relative; z-index:1; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; padding:14px 16px; border:1px solid var(--border); border-radius:14px; background:var(--card)}
-    .flow-node:hover{box-shadow:0 4px 14px rgba(2,6,23,.12)}
-
-    /* the only colourful element */
-    .flow-node .pill{width:30px; height:30px; border-radius:999px; display:grid; place-items:center; font-weight:800; color:#fff; background: var(--node-accent, #334155)}
-    .flow-node h4{margin:0; font-size:14px}
-    .flow-node .meta{font-size:12px; color:var(--muted)}
-    .flow-node .node-badges{display:flex; gap:6px; margin-top:6px}
-    .node-badge{font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--muted)}
-    .node-actions{display:flex; gap:6px}
-
-    /* Type accent variables – used only for the pill */
-    .t-classic{ --node-accent:#16a34a }
-    .t-generative{ --node-accent:#f59e0b }
-    .t-tenant{ --node-accent:#2563eb }
-    .t-flow{ --node-accent:#ea580c }
-    .t-toolBasic{ --node-accent:#64748b }
-    .t-toolStandard{ --node-accent:#8b5cf6 }
-    .t-toolPremium{ --node-accent:#ef4444 }
-    .t-web{ --node-accent:#334155 }
-
-    .flow-node.selected{outline:2px solid color-mix(in hsl, var(--accent) 50%, transparent)}
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="container">
     <header>
       <div>
-        <h1>Copilot Studio – Message Cost & Agent Builder</h1>
-        <div class="sub">Compare PAYG vs Packs, or model an agent to auto‑populate volumes. Prices are ex‑VAT.</div>
+        <h1>Copilot Studio - Message Cost & Agent Builder</h1>
+        <div class="sub">Compare PAYG vs Packs, or model an agent to autoâ€‘populate volumes. Prices are exâ€‘VAT.</div>
       </div>
     </header>
 
@@ -160,12 +44,12 @@
             <summary>Advanced pricing (edit if needed)</summary>
             <div class="row" style="margin-top:10px">
               <div>
-                <label for="payg">PAYG price per message (£)</label>
+                <label for="payg">PAYG price per message (Â£)</label>
                 <input id="payg" type="number" inputmode="decimal" min="0" step="0.0001" value="0.008" />
-                <div class="hint">Assumes $0.01/msg ↦ ~£0.008 after FX.</div>
+                <div class="hint">Assumes $0.01/msg â†¦ ~Â£0.008 after FX.</div>
               </div>
               <div>
-                <label for="packPrice">Message pack price (£)</label>
+                <label for="packPrice">Message pack price (Â£)</label>
                 <input id="packPrice" type="number" inputmode="decimal" min="0" step="0.01" value="153.80" />
               </div>
               <div>
@@ -181,7 +65,7 @@
 
           <div class="result">
             <div>Effective messages incl. buffer</div>
-            <strong class="mono" id="effective">–</strong>
+            <strong class="mono" id="effective">â€“</strong>
           </div>
         </section>
 
@@ -193,21 +77,21 @@
           <div class="recommend" id="recCard">
             <div>
               <h3>Recommendation</h3>
-              <div class="muted" id="why">—</div>
+              <div class="muted" id="why">â€”</div>
             </div>
-            <div class="big" id="recommend">—</div>
+            <div class="big" id="recommend">â€”</div>
           </div>
 
           <div style="margin-top:10px" class="row">
             <div class="full">
-              <div class="hint">Breakeven (PAYG ≈ one pack): <span class="mono" id="breakeven">—</span> messages (VAT cancels).</div>
+              <div class="hint">Breakeven (PAYG â‰ˆ one pack): <span class="mono" id="breakeven">â€”</span> messages (VAT cancels).</div>
             </div>
           </div>
         </section>
       </div>
 
       <footer>
-        <p>Assumptions: UK list prices (ex‑VAT). PAYG in GBP fluctuates with FX; adjust per‑message if needed. Packs are whole‑unit (ceil to full packs). “Buffer” multiplies your volume before pricing.</p>
+        <p>Assumptions: UK list prices (exâ€‘VAT). PAYG in GBP fluctuates with FX; adjust perâ€‘message if needed. Packs are wholeâ€‘unit (ceil to full packs). â€œBufferâ€ multiplies your volume before pricing.</p>
       </footer>
     </section>
 
@@ -237,12 +121,12 @@
               <select id="nodeType">
                 <option value="classic">Classic answer (+1)</option>
                 <option value="generative">Generative answer (+2)</option>
-                <option value="tenant">Tenant‑graph grounding (+10)</option>
+                <option value="tenant">Tenantâ€‘graph grounding (+10)</option>
                 <option value="flow">Agent flow (invoke + actions)</option>
-                <option value="toolBasic">AI tool – Basic (+0.1 each)</option>
-                <option value="toolStandard">AI tool – Standard (+1.5 each)</option>
-                <option value="toolPremium">AI tool – Premium (+10 each)</option>
-                <option value="web">Web‑grounded (0)</option>
+                <option value="toolBasic">AI tool â€“ Basic (+0.1 each)</option>
+                <option value="toolStandard">AI tool â€“ Standard (+1.5 each)</option>
+                <option value="toolPremium">AI tool â€“ Premium (+10 each)</option>
+                <option value="web">Webâ€‘grounded (0)</option>
               </select>
             </div>
             <div>
@@ -252,7 +136,7 @@
             <div id="flowActionsWrap" class="full">
               <label for="flowActions">Actions inside flow (per run)</label>
               <input id="flowActions" type="number" min="0" step="1" value="3" />
-              <div class="hint">Message calc for flow: <span class="mono">qty × (5 + 0.13 × actions)</span></div>
+              <div class="hint">Message calc for flow: <span class="mono">qty Ã— (5 + 0.13 Ã— actions)</span></div>
             </div>
             <div class="full actions">
               <button id="addOrUpdateNode" class="btn primary">Add step</button>
@@ -279,296 +163,7 @@
     </section>
   </div>
 
-  <script>
-    const GBP = new Intl.NumberFormat('en-GB', { style:'currency', currency:'GBP' });
-
-    // ======== Shared els for Calculator ========
-    const els = {
-      messages: document.getElementById('messages'),
-      buffer: document.getElementById('buffer'),
-      payg: document.getElementById('payg'),
-      packPrice: document.getElementById('packPrice'),
-      packSize: document.getElementById('packSize'),
-      vat: document.getElementById('vat'),
-      vatRate: document.getElementById('vatRate'),
-      effective: document.getElementById('effective'),
-      options: document.getElementById('options'),
-      recommend: document.getElementById('recommend'),
-      why: document.getElementById('why'),
-      breakeven: document.getElementById('breakeven'),
-      recCard: document.getElementById('recCard')
-    };
-
-    const parse = (el, def=0) => {
-      const n = parseFloat(el.value);
-      return Number.isFinite(n) ? n : def;
-    };
-
-    function calc(){
-      const messages = Math.max(0, Math.floor(parse(els.messages)));
-      const bufferPct = Math.max(0, parse(els.buffer));
-      const paygRate = Math.max(0, parse(els.payg));
-      const packPrice = Math.max(0, parse(els.packPrice));
-      const packSize = Math.max(1, Math.floor(parse(els.packSize)));
-      const vatOn = els.vat.checked;
-      const vatRate = Math.max(0, parse(els.vatRate));
-
-      const eff = Math.ceil(messages * (1 + bufferPct/100));
-      const vatMult = vatOn ? (1 + vatRate/100) : 1;
-
-      // PAYG
-      const paygCost = eff * paygRate * vatMult;
-      const paygEffectivePerMsg = paygRate * vatMult;
-
-      // Packs
-      const packs = Math.ceil(eff / packSize);
-      const packCost = packs * packPrice * vatMult;
-      const packWaste = packs * packSize - eff;
-      const packEffectivePerMsg = packCost / eff;
-
-      // Hybrid (Packs + PAYG for overspill)
-      const packsFloor = Math.floor(eff / packSize);
-      const remainder = eff - packsFloor * packSize;
-      const remainderCostPayg = remainder * paygRate * vatMult;
-      const onePackCost = packPrice * vatMult;
-      const remainderStrategy = remainder === 0 ? 'none' : (remainderCostPayg <= onePackCost ? 'PAYG' : 'Pack');
-      const hybridPacks = packsFloor + (remainder > 0 && remainderStrategy === 'Pack' ? 1 : 0);
-      const hybridCost = (packsFloor * packPrice * vatMult) + (remainder === 0 ? 0 : Math.min(remainderCostPayg, onePackCost));
-      const hybridWaste = remainderStrategy === 'Pack' ? (packSize - remainder) : 0;
-      const hybridEffectivePerMsg = hybridCost / eff;
-
-      // Breakeven (ex-VAT; VAT cancels)
-      const breakeven = paygRate > 0 ? Math.ceil(packPrice / paygRate) : Infinity;
-
-      els.effective.textContent = eff.toLocaleString('en-GB');
-      els.breakeven.textContent = Number.isFinite(breakeven) ? breakeven.toLocaleString('en-GB') : '—';
-
-      const optionsArr = [
-        { key: 'PAYG', title: 'PAYG', cost: paygCost, perMsg: paygEffectivePerMsg },
-        { key: 'Packs', title: 'Message Packs', cost: packCost, perMsg: packEffectivePerMsg },
-        { key: 'Hybrid', title: 'Hybrid (Packs + PAYG)', cost: hybridCost, perMsg: hybridEffectivePerMsg }
-      ].sort((a,b)=>a.cost-b.cost);
-
-      const best = optionsArr[0];
-      const second = optionsArr[1] ?? optionsArr[0];
-      els.recommend.textContent = best.title;
-      els.why.textContent = `Saves ${GBP.format(second.cost - best.cost)} vs ${second.title} this month.`;
-
-      // Render options
-      els.options.innerHTML = '';
-      const frag = document.createDocumentFragment();
-
-      const makeRow = (title, price, perMsg, meta=[]) => {
-        const wrap = document.createElement('div');
-        wrap.className = 'option' + (title===best.title ? ' good' : '');
-        const titleEl = document.createElement('h3');
-        titleEl.textContent = title;
-        wrap.appendChild(titleEl);
-        const priceEl = document.createElement('div');
-        priceEl.innerHTML = `<span class="price">${GBP.format(price)}</span> <span class="pm">/ month</span>`;
-        wrap.appendChild(priceEl);
-        const metaEl = document.createElement('div');
-        metaEl.className='hint';
-        metaEl.innerHTML = meta.join(' · ');
-        wrap.appendChild(metaEl);
-        const badge = document.createElement('div');
-        badge.className='badge';
-        badge.textContent = `≈ ${GBP.format(perMsg * 1000)} / 1k msgs`;
-        wrap.appendChild(badge);
-        frag.appendChild(wrap);
-      };
-
-      makeRow('PAYG', paygCost, paygEffectivePerMsg, [
-        `${eff.toLocaleString('en-GB')} msgs × ${GBP.format(paygRate)} each${vatOn?` + VAT`:''}`
-      ]);
-
-      makeRow('Message Packs', packCost, packEffectivePerMsg, [
-        `${packs} × ${GBP.format(packPrice)} pack${packs!==1?'s':''} (${packSize.toLocaleString('en-GB')} msgs each)${vatOn?` + VAT`:''}`,
-        packWaste>0?`${packWaste.toLocaleString('en-GB')} unused msgs this month`:'no unused messages'
-      ]);
-
-      makeRow('Hybrid (Packs + PAYG)', hybridCost, hybridEffectivePerMsg, [
-        `${hybridPacks} × ${GBP.format(packPrice)} pack${hybridPacks!==1?'s':''}${remainder>0 ? (remainderStrategy==='PAYG' ? ` + ${remainder.toLocaleString('en-GB')} msgs via PAYG` : ' (overspill covered by extra pack)') : ''}${vatOn?` + VAT`:''}`,
-        hybridWaste>0?`${hybridWaste.toLocaleString('en-GB')} unused msgs this month`:'no unused messages'
-      ]);
-
-      els.options.appendChild(frag);
-    }
-
-    // Bind calculator inputs
-    [els.messages, els.buffer, els.payg, els.packPrice, els.packSize, els.vat, els.vatRate]
-      .forEach(el => el.addEventListener('input', calc));
-
-    // ======== Tabs ========
-    const tabCalc = document.getElementById('tab-calc');
-    const tabFlow = document.getElementById('tab-flow');
-    const viewCalc = document.getElementById('view-calc');
-    const viewFlow = document.getElementById('view-flow');
-    function switchTab(which){
-      const isCalc = which==='calc';
-      tabCalc.setAttribute('aria-selected', isCalc);
-      tabFlow.setAttribute('aria-selected', !isCalc);
-      viewCalc.classList.toggle('hidden', !isCalc);
-      viewFlow.classList.toggle('hidden', isCalc);
-    }
-    tabCalc.addEventListener('click', ()=>switchTab('calc'));
-    tabFlow.addEventListener('click', ()=>switchTab('flow'));
-
-    // ======== Agent builder logic ========
-    const canvas = document.getElementById('canvas');
-    const nodeName = document.getElementById('nodeName');
-    const nodeType = document.getElementById('nodeType');
-    const nodeQty = document.getElementById('nodeQty');
-    const flowActionsWrap = document.getElementById('flowActionsWrap');
-    const flowActions = document.getElementById('flowActions');
-    const addOrUpdateNode = document.getElementById('addOrUpdateNode');
-    const duplicateNode = document.getElementById('duplicateNode');
-    const deleteNode = document.getElementById('deleteNode');
-    const moveUp = document.getElementById('moveUp');
-    const moveDown = document.getElementById('moveDown');
-    const perRun = document.getElementById('perRun');
-    const expectedVolume = document.getElementById('expectedVolume');
-    const pushToCalc = document.getElementById('pushToCalc');
-
-    let nodes = [];
-    let selected = -1;
-    let uid = 0;
-
-    const typeToRate = (t, actions=0) => ({
-      classic: 1,
-      generative: 2,
-      tenant: 10,
-      flow: 5 + (0.13 * actions),
-      toolBasic: 0.1,
-      toolStandard: 1.5,
-      toolPremium: 10,
-      web: 0
-    })[t] ?? 0;
-
-    const typeLabel = (t) => ({
-      classic:'Classic', generative:'Generative', tenant:'Tenant‑graph', flow:'Agent flow', toolBasic:'AI tool (Basic)', toolStandard:'AI tool (Standard)', toolPremium:'AI tool (Premium)', web:'Web‑grounded'
-    })[t] ?? t;
-
-    function showFlowActions(){
-      flowActionsWrap.style.display = (nodeType.value === 'flow') ? 'block' : 'none';
-    }
-    nodeType.addEventListener('change', showFlowActions);
-    showFlowActions();
-
-    function nodeMsgs(n){
-      const rate = typeToRate(n.type, n.actions||0);
-      return +(rate * n.qty).toFixed(3);
-    }
-
-    function renderNodes(){
-      canvas.innerHTML='';
-      nodes.forEach((n,i)=>{
-        const node = document.createElement('div');
-        node.className = `flow-node t-${n.type}` + (i===selected?' selected':'');
-        node.dataset.i = i;
-        node.innerHTML = `
-          <div class="pill">${i+1}</div>
-          <div>
-            <h4>${n.name || typeLabel(n.type)}</h4>
-            <div class="meta">${typeLabel(n.type)}${n.type==='flow'?` • ${n.actions} actions`:''} • qty ${n.qty} • ${nodeMsgs(n)} msgs</div>
-            <div class="node-badges">
-              <span class="node-badge">rate ${typeToRate(n.type, n.actions||0)}</span>
-            </div>
-          </div>
-          <div class="node-actions">
-            <button class="btn" data-action="edit">Edit</button>
-            <button class="btn" data-action="delete">Delete</button>
-          </div>`;
-        canvas.appendChild(node);
-      });
-
-      // Totals
-      let perRunTotal = nodes.reduce((s,n)=>s+nodeMsgs(n),0);
-      perRun.textContent = perRunTotal.toFixed(3);
-
-      // Sync calculator: total monthly messages = perRun * expected runs
-      const expected = Math.max(0, Math.floor(parseFloat(expectedVolume.value)||0));
-      const totalMonthly = Math.ceil(perRunTotal * expected);
-      els.messages.value = totalMonthly;
-      calc();
-    }
-
-    function clearInspector(){
-      selected = -1;
-      nodeName.value='';
-      nodeType.value='classic';
-      nodeQty.value='1';
-      flowActions.value='3';
-      addOrUpdateNode.textContent='Add step';
-      showFlowActions();
-    }
-
-    function loadInspector(i){
-      const n = nodes[i]; if(!n) return;
-      selected = i;
-      nodeName.value = n.name || '';
-      nodeType.value = n.type;
-      nodeQty.value = n.qty;
-      flowActions.value = n.actions || 0;
-      addOrUpdateNode.textContent='Update step';
-      showFlowActions();
-    }
-
-    // Canvas click handling
-    canvas.addEventListener('click', (e)=>{
-      const wrap = e.target.closest('.flow-node');
-      if(!wrap) return;
-      const i = Number(wrap.dataset.i);
-      const action = e.target.dataset.action;
-      if(action==='delete'){ nodes.splice(i,1); clearInspector(); renderNodes(); return; }
-      loadInspector(i);
-      renderNodes();
-    });
-
-    addOrUpdateNode.addEventListener('click', ()=>{
-      const n = {
-        id: ++uid,
-        name: nodeName.value.trim(),
-        type: nodeType.value,
-        qty: Math.max(1, Math.floor(parseFloat(nodeQty.value)||1)),
-        actions: Math.max(0, Math.floor(parseFloat(flowActions.value)||0))
-      };
-      if(selected>=0){
-        nodes[selected] = n;
-      } else {
-        nodes.push(n);
-      }
-      renderNodes();
-      clearInspector();
-    });
-
-    duplicateNode.addEventListener('click', ()=>{
-      if(selected<0) return;
-      const base = nodes[selected];
-      nodes.splice(selected+1,0,{...base,id:++uid});
-      renderNodes();
-    });
-
-    deleteNode.addEventListener('click', ()=>{
-      if(selected<0) return;
-      nodes.splice(selected,1); clearInspector(); renderNodes();
-    });
-
-    moveUp.addEventListener('click', ()=>{
-      if(selected<=0) return; const i=selected; [nodes[i-1],nodes[i]]=[nodes[i],nodes[i-1]]; selected=i-1; renderNodes();
-    });
-    moveDown.addEventListener('click', ()=>{
-      if(selected<0 || selected>=nodes.length-1) return; const i=selected; [nodes[i],nodes[i+1]]=[nodes[i+1],nodes[i]]; selected=i+1; renderNodes();
-    });
-
-    [expectedVolume].forEach(el=>el.addEventListener('input', renderNodes));
-    nodeType.addEventListener('change', showFlowActions);
-
-    pushToCalc.addEventListener('click', ()=>{ switchTab('calc'); });
-
-    // Initial render
-    calc();
-    renderNodes();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
+
