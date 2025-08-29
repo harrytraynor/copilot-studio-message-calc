@@ -108,6 +108,13 @@
     .inspector #flowActionsWrap{margin-top:2px}
     .btn[data-action="delete"]{border-color: color-mix(in hsl, var(--bad) 40%, var(--border)); color: var(--bad)}
     .hidden{display:none}
+    
+    /* Export table */
+    .table{width:100%; border-collapse:collapse; font-size:13px; background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow: var(--shadow-sm)}
+    .table th, .table td{padding:10px 12px; border-bottom:1px solid var(--border); text-align:left}
+    .table th{font-weight:700; color:var(--muted); background:color-mix(in hsl, var(--card) 90%, transparent)}
+    .table tr:last-child td{border-bottom:0}
+    .section-title{margin:10px 0 6px; font-size:13px; color:var(--muted)}
 
     /* Agent nodes - minimal, cleaner UI */
     .flow-canvas{position:relative; display:flex; flex-direction:column; gap:12px}

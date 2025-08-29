@@ -18,6 +18,7 @@
     <nav class="tabs" role="tablist" aria-label="Views">
       <button class="tab" role="tab" id="tab-calc" aria-controls="view-calc" aria-selected="true">Calculator</button>
       <button class="tab" role="tab" id="tab-flow" aria-controls="view-flow" aria-selected="false">Agent Builder</button>
+      <button class="tab" role="tab" id="tab-export" aria-controls="view-export" aria-selected="false">Export</button>
     </nav>
 
     <!-- CALCULATOR VIEW -->
@@ -178,6 +179,17 @@
           <p class="hint" style="margin-top:10px">The agent view auto-syncs the Calculator's messages field.</p>
         </section>
       </div>
+    </section>
+    
+    <!-- EXPORT VIEW -->
+    <section id="view-export" class="hidden" role="tabpanel" aria-labelledby="tab-export">
+      <section class="card">
+        <h2>Breakdown</h2>
+        <div class="actions" style="margin-bottom:8px">
+          <button id="copyBreakdown" class="btn">Copy as TSV</button>
+        </div>
+        <div id="breakdown"></div>
+      </section>
     </section>
   </div>
 

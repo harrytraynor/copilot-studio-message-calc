@@ -215,6 +215,8 @@ function calc() {
   ]);
 
   els.options.appendChild(frag);
+  // Keep export view in sync
+  if (typeof renderExport === 'function') renderExport();
 }
 
 // Bind calculator inputs
@@ -224,18 +226,28 @@ function calc() {
 // ======== Tabs ========
 const tabCalc = document.getElementById('tab-calc');
 const tabFlow = document.getElementById('tab-flow');
+const tabExport = document.getElementById('tab-export');
 const viewCalc = document.getElementById('view-calc');
 const viewFlow = document.getElementById('view-flow');
+const viewExport = document.getElementById('view-export');
+// Export DOM refs (declared early so renderExport can run during initial calc)
+const breakdown = document.getElementById('breakdown');
+const copyBreakdown = document.getElementById('copyBreakdown');
 
 function switchTab(which) {
   const isCalc = which === 'calc';
-  tabCalc.setAttribute('aria-selected', isCalc);
-  tabFlow.setAttribute('aria-selected', !isCalc);
-  viewCalc.classList.toggle('hidden', !isCalc);
-  viewFlow.classList.toggle('hidden', isCalc);
+  const isFlow = which === 'flow';
+  const isExport = which === 'export';
+  tabCalc && tabCalc.setAttribute('aria-selected', isCalc);
+  tabFlow && tabFlow.setAttribute('aria-selected', isFlow);
+  tabExport && tabExport.setAttribute('aria-selected', isExport);
+  viewCalc && viewCalc.classList.toggle('hidden', !isCalc);
+  viewFlow && viewFlow.classList.toggle('hidden', !isFlow);
+  viewExport && viewExport.classList.toggle('hidden', !isExport);
 }
 tabCalc.addEventListener('click', () => switchTab('calc'));
 tabFlow.addEventListener('click', () => switchTab('flow'));
+tabExport && tabExport.addEventListener('click', () => { renderExport(); switchTab('export'); });
 
 // ======== Agent builder logic ========
 const canvas = document.getElementById('canvas');
@@ -341,6 +353,7 @@ function renderNodes() {
   const totalMonthly = Math.ceil(perRunTotal * expected);
   els.messages.value = totalMonthly;
   calc();
+  if (typeof renderExport === 'function') renderExport();
 }
 
 function clearInspector() {
@@ -426,3 +439,131 @@ pushToCalc.addEventListener('click', () => { switchTab('calc'); });
 // Initial render
 calc();
 renderNodes();
+
+// ======== Export breakdown ========
+
+function renderExport(){
+  if(!breakdown) return;
+  const expected = Math.max(0, Math.floor(parseFloat(expectedVolume?.value)||0));
+  const totalUsers = Math.max(0, Math.floor(parse(els.totalUsers)));
+  const licensedUsers = Math.max(0, Math.floor(parse(els.licensedUsers)));
+  const m365On = !!(m365Apply && m365Apply.checked) && totalUsers>0 && licensedUsers>0;
+  const share = m365On ? Math.min(1, licensedUsers/totalUsers) : 0;
+
+  // Node breakdown rows
+  const nodeRows = [];
+  let perRunTotal = 0, perRunBilled = 0;
+  nodes.forEach((n,i)=>{
+    const rate = typeToRate(n.type, n.actions||0);
+    const msgs = +(rate * n.qty).toFixed(3);
+    const covered = M365_COVERED_TYPES.has(n.type);
+    const billed = +(msgs * (covered? (1-share):1)).toFixed(3);
+    perRunTotal += msgs; perRunBilled += billed;
+    nodeRows.push({
+      idx:i+1,
+      name:n.name || typeLabel(n.type),
+      type:typeLabel(n.type),
+      qty:n.qty,
+      actions:n.type==='flow'?(n.actions||0):'',
+      rate,
+      msgs,
+      covered: covered?'Yes':'No',
+      billed
+    });
+  });
+
+  // Effective volumes (monthly)
+  const bufferPct = Math.max(0, parse(els.buffer));
+  const monthly = Math.ceil(perRunTotal * expected);
+  const monthlyBilled = Math.ceil(perRunBilled * expected);
+  const eff = Math.ceil(monthly * (1+bufferPct/100));
+  const effWith = Math.ceil(monthlyBilled * (1+bufferPct/100));
+
+  // Pricing parameters
+  const paygRate = Math.max(0, parse(els.payg));
+  const packPrice = Math.max(0, parse(els.packPrice));
+  const packSize = Math.max(1, Math.floor(parse(els.packSize)));
+  const vatOn = els.vat.checked;
+  const vatRate = Math.max(0, parse(els.vatRate));
+  const vatMult = vatOn ? (1 + vatRate/100) : 1;
+
+  // Helper: best monthly cost
+  const bestCostFor = (E) => {
+    const payg = E * paygRate * vatMult;
+    const packs = Math.ceil(E / packSize);
+    const packCost = packs * packPrice * vatMult;
+    const pf = Math.floor(E / packSize);
+    const rem = E - pf*packSize;
+    const remPayg = rem * paygRate * vatMult;
+    const onePack = packPrice * vatMult;
+    const hybrid = (pf * packPrice * vatMult) + (rem===0?0:Math.min(remPayg, onePack));
+    return { PAYG:payg, Packs:packCost, Hybrid:hybrid };
+  };
+
+  const costsBase = bestCostFor(eff);
+  const costsWith = bestCostFor(effWith);
+
+  // Build HTML tables
+  let html = '';
+  html += `<div class="section-title">Node breakdown (per run)</div>`;
+  html += `<table class="table"><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Qty</th><th>Actions</th><th>Rate</th><th>Msgs/run</th><th>Covered</th><th>Billed/run${m365On?' (M365)':''}</th></tr></thead><tbody>`;
+  nodeRows.forEach(r=>{
+    html += `<tr><td>${r.idx}</td><td>${r.name}</td><td>${r.type}</td><td>${r.qty}</td><td>${r.actions}</td><td>${r.rate}</td><td>${r.msgs}</td><td>${r.covered}</td><td>${r.billed}</td></tr>`;
+  });
+  html += `<tr><td colspan="6"><strong>Totals</strong></td><td><strong>${perRunTotal.toFixed(3)}</strong></td><td></td><td><strong>${perRunBilled.toFixed(3)}</strong></td></tr>`;
+  html += `</tbody></table>`;
+
+  html += `<div class="section-title">Volumes (monthly)</div>`;
+  html += `<table class="table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>`;
+  html += `<tr><td>Runs/month</td><td>${expected.toLocaleString('en-GB')}</td></tr>`;
+  html += `<tr><td>Messages/month (baseline)</td><td>${monthly.toLocaleString('en-GB')}</td></tr>`;
+  html += `<tr><td>Messages/month (with M365)</td><td>${monthlyBilled.toLocaleString('en-GB')}</td></tr>`;
+  html += `<tr><td>Effective (incl. buffer)</td><td>${eff.toLocaleString('en-GB')}</td></tr>`;
+  html += `<tr><td>Effective with M365 (incl. buffer)</td><td>${effWith.toLocaleString('en-GB')}</td></tr>`;
+  html += `</tbody></table>`;
+
+  html += `<div class="section-title">Pricing summary</div>`;
+  html += `<table class="table"><thead><tr><th>Option</th><th>Baseline</th><th>With M365</th><th>Savings</th></tr></thead><tbody>`;
+  ['PAYG','Packs','Hybrid'].forEach(k=>{
+    const b = costsBase[k]; const w = costsWith[k]; const s = Math.max(0,b-w);
+    html += `<tr><td>${k}</td><td>${GBP.format(b)}</td><td>${GBP.format(w)}</td><td>${GBP.format(s)}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+
+  breakdown.innerHTML = html;
+
+  // Copy TSV
+  if(copyBreakdown){
+    copyBreakdown.onclick = () => {
+      const lines = [];
+      lines.push(['#','Name','Type','Qty','Actions','Rate','Msgs/run','Covered','Billed/run'].join('\t'));
+      nodeRows.forEach(r=>lines.push([r.idx,r.name,r.type,r.qty,r.actions,r.rate,r.msgs,r.covered,r.billed].join('\t')));
+      lines.push('');
+      lines.push(['Metric','Value'].join('\t'));
+      lines.push(['Runs/month', expected].join('\t'));
+      lines.push(['Messages/month (baseline)', monthly].join('\t'));
+      lines.push(['Messages/month (with M365)', monthlyBilled].join('\t'));
+      lines.push(['Effective (incl. buffer)', eff].join('\t'));
+      lines.push(['Effective with M365 (incl. buffer)', effWith].join('\t'));
+      lines.push('');
+      lines.push(['Option','Baseline','With M365','Savings'].join('\t'));
+      ['PAYG','Packs','Hybrid'].forEach(k=>{
+        const b = costsBase[k]; const w = costsWith[k]; const s = Math.max(0,b-w);
+        lines.push([k, b, w, s].join('\t'));
+      });
+      const tsv = lines.join('\n');
+      navigator.clipboard?.writeText(tsv).then(()=>{
+        copyBreakdown.textContent = 'Copied!';
+        setTimeout(()=>copyBreakdown.textContent='Copy as TSV',1200);
+      }).catch(()=>{
+        // Fallback
+        const ta = document.createElement('textarea'); ta.value = tsv; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+        copyBreakdown.textContent = 'Copied!'; setTimeout(()=>copyBreakdown.textContent='Copy as TSV',1200);
+      });
+    };
+  }
+}
+
+// Re-render export when things change
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) renderExport(); });
+window.addEventListener('focus', renderExport);
