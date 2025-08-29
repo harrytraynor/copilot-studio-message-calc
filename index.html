@@ -11,7 +11,7 @@
     <header>
       <div>
         <h1>Copilot Studio - Message Cost & Agent Builder</h1>
-        <div class="sub">Compare PAYG vs Packs, or model an agent to autoâ€‘populate volumes. Prices are exâ€‘VAT.</div>
+        <div class="sub">Compare PAYG vs Packs, or model an agent to auto-populate volumes. Prices are ex-VAT.</div>
       </div>
     </header>
 
@@ -44,12 +44,12 @@
             <summary>Advanced pricing (edit if needed)</summary>
             <div class="row" style="margin-top:10px">
               <div>
-                <label for="payg">PAYG price per message (Â£)</label>
+                <label for="payg">PAYG price per message (£)</label>
                 <input id="payg" type="number" inputmode="decimal" min="0" step="0.0001" value="0.008" />
-                <div class="hint">Assumes $0.01/msg â†¦ ~Â£0.008 after FX.</div>
+                <div class="hint">Assumes $0.01/msg ≈ £0.008 after FX.</div>
               </div>
               <div>
-                <label for="packPrice">Message pack price (Â£)</label>
+                <label for="packPrice">Message pack price (£)</label>
                 <input id="packPrice" type="number" inputmode="decimal" min="0" step="0.01" value="153.80" />
               </div>
               <div>
@@ -65,7 +65,7 @@
 
           <div class="result">
             <div>Effective messages incl. buffer</div>
-            <strong class="mono" id="effective">â€“</strong>
+            <strong class="mono" id="effective">0</strong>
           </div>
         </section>
 
@@ -77,21 +77,21 @@
           <div class="recommend" id="recCard">
             <div>
               <h3>Recommendation</h3>
-              <div class="muted" id="why">â€”</div>
+              <div class="muted" id="why">—</div>
             </div>
-            <div class="big" id="recommend">â€”</div>
+            <div class="big" id="recommend">—</div>
           </div>
 
           <div style="margin-top:10px" class="row">
             <div class="full">
-              <div class="hint">Breakeven (PAYG â‰ˆ one pack): <span class="mono" id="breakeven">â€”</span> messages (VAT cancels).</div>
+              <div class="hint">Breakeven (PAYG vs one pack): <span class="mono" id="breakeven">—</span> messages (VAT cancels).</div>
             </div>
           </div>
         </section>
       </div>
 
       <footer>
-        <p>Assumptions: UK list prices (exâ€‘VAT). PAYG in GBP fluctuates with FX; adjust perâ€‘message if needed. Packs are wholeâ€‘unit (ceil to full packs). â€œBufferâ€ multiplies your volume before pricing.</p>
+        <p>Assumptions: UK list prices (ex-VAT). PAYG in GBP fluctuates with FX; adjust per-message if needed. Packs are whole-unit (ceil to full packs). "Buffer" multiplies your volume before pricing.</p>
       </footer>
     </section>
 
@@ -121,12 +121,12 @@
               <select id="nodeType">
                 <option value="classic">Classic answer (+1)</option>
                 <option value="generative">Generative answer (+2)</option>
-                <option value="tenant">Tenantâ€‘graph grounding (+10)</option>
+                <option value="tenant">Tenant graph grounding (+10)</option>
                 <option value="flow">Agent flow (invoke + actions)</option>
-                <option value="toolBasic">AI tool â€“ Basic (+0.1 each)</option>
-                <option value="toolStandard">AI tool â€“ Standard (+1.5 each)</option>
-                <option value="toolPremium">AI tool â€“ Premium (+10 each)</option>
-                <option value="web">Webâ€‘grounded (0)</option>
+                <option value="toolBasic">AI tool - Basic (+0.1 each)</option>
+                <option value="toolStandard">AI tool - Standard (+1.5 each)</option>
+                <option value="toolPremium">AI tool - Premium (+10 each)</option>
+                <option value="web">Web-grounded (0)</option>
               </select>
             </div>
             <div>
@@ -136,7 +136,7 @@
             <div id="flowActionsWrap" class="full">
               <label for="flowActions">Actions inside flow (per run)</label>
               <input id="flowActions" type="number" min="0" step="1" value="3" />
-              <div class="hint">Message calc for flow: <span class="mono">qty Ã— (5 + 0.13 Ã— actions)</span></div>
+              <div class="hint">Message calc for flow: <span class="mono">qty × (5 + 0.13 × actions)</span></div>
             </div>
             <div class="full actions">
               <button id="addOrUpdateNode" class="btn primary">Add step</button>

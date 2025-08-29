@@ -1,4 +1,4 @@
-﻿
+
     :root{
       --bg: #0b1220;
       --card: #0f172a;
@@ -78,7 +78,7 @@
     .recommend .muted{color:var(--muted); font-size:12px}
 
     /* Agent builder */
-.flow-grid{display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start}
+    .flow-grid{display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start}
     @media (max-width: 980px){ .flow-grid{grid-template-columns: 1fr} }
     .actions{display:flex; gap:8px}
     .btn{appearance:none; border:1px solid var(--border); background:transparent; padding:10px 12px; border-radius:10px; color:var(--text); cursor:pointer}
@@ -87,7 +87,7 @@
     .btn[data-action="delete"]{border-color: color-mix(in hsl, var(--bad) 40%, var(--border)); color: var(--bad)}
     .hidden{display:none}
 
-    /* Agent nodes â€“ minimal, cleaner UI */
+    /* Agent nodes - minimal, cleaner UI */
     .flow-canvas{position:relative; display:flex; flex-direction:column; gap:12px}
     /* single connector behind nodes */
     .flow-canvas::before{content:""; position:absolute; left:31px; top:8px; bottom:8px; width:2px; background:var(--border); z-index:0}
@@ -103,7 +103,7 @@
     .node-badge{font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--muted)}
     .node-actions{display:flex; gap:6px}
 
-    /* Type accent variables â€“ used only for the pill */
+    /* Type accent variables - used only for the pill */
     .t-classic{ --node-accent:#16a34a }
     .t-generative{ --node-accent:#f59e0b }
     .t-tenant{ --node-accent:#2563eb }
@@ -115,3 +115,4 @@
 
     .flow-node.selected{outline:2px solid color-mix(in hsl, var(--accent) 50%, transparent)}
   
+
