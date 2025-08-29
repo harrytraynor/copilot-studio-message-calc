@@ -1,7 +1,8 @@
 const GBP = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' });
 
 // Types assumed covered by Microsoft 365 Copilot license
-const M365_COVERED_TYPES = new Set(['classic', 'generative', 'web']);
+// Include Classic, Generative, Web-grounded, and Graph-grounded (tenant)
+const M365_COVERED_TYPES = new Set(['classic', 'generative', 'web', 'tenant']);
 
 function bestMonthlyCostForEff(eff, paygRate, packPrice, packSize, vatMult) {
   if (!Number.isFinite(eff) || eff <= 0) return 0;
@@ -32,7 +33,9 @@ const els = {
   breakeven: document.getElementById('breakeven'),
   recCard: document.getElementById('recCard'),
   totalUsers: document.getElementById('totalUsers'),
-  licensedUsers: document.getElementById('licensedUsers')
+  licensedUsers: document.getElementById('licensedUsers'),
+  effectiveM365: document.getElementById('effectiveM365'),
+  m365EffWrap: document.getElementById('m365EffWrap')
 };
 const m365Apply = document.getElementById('m365Apply');
 
@@ -52,6 +55,23 @@ function calc() {
 
   const eff = Math.ceil(messages * (1 + bufferPct / 100));
   const vatMult = vatOn ? (1 + vatRate / 100) : 1;
+
+  // Preview: effective billed messages with M365 (if applied)
+  const totalUsers = Math.max(0, Math.floor(parse(els.totalUsers)));
+  const licensedUsers = Math.max(0, Math.floor(parse(els.licensedUsers)));
+  const m365OnPreview = !!(m365Apply && m365Apply.checked) && totalUsers > 0 && licensedUsers > 0;
+  let effM365 = eff;
+  if (m365OnPreview) {
+    const totalRatePrev = (typeof nodes !== 'undefined') ? nodes.reduce((s, n) => s + nodeMsgs(n), 0) : 0;
+    const coveredRatePrev = (typeof nodes !== 'undefined') ? nodes.filter(n => M365_COVERED_TYPES.has(n.type)).reduce((s, n) => s + nodeMsgs(n), 0) : 0;
+    const coveredFracPrev = totalRatePrev > 0 ? Math.min(1, coveredRatePrev / totalRatePrev) : 1; // assume fully covered if no flow
+    const sharePrev = Math.min(1, licensedUsers / totalUsers);
+    effM365 = Math.ceil(eff * (1 - sharePrev * coveredFracPrev));
+  }
+  if (els.effectiveM365 && els.m365EffWrap) {
+    els.effectiveM365.textContent = effM365.toLocaleString('en-GB');
+    els.m365EffWrap.style.display = m365OnPreview ? 'flex' : 'none';
+  }
 
   // PAYG
   const paygCost = eff * paygRate * vatMult;
@@ -93,9 +113,7 @@ function calc() {
 
   // Optional M365-adjusted costs (calculator-level)
   let withCosts = null;
-  const totalUsers = Math.max(0, Math.floor(parse(els.totalUsers)));
-  const licensedUsers = Math.max(0, Math.floor(parse(els.licensedUsers)));
-  const m365On = !!(m365Apply && m365Apply.checked) && totalUsers > 0 && licensedUsers > 0;
+  const m365On = m365OnPreview;
   if (m365On) {
     // Determine covered fraction from Agent Builder mix if available; otherwise assume 100% covered
     const totalRate = nodes.reduce((s, n) => s + nodeMsgs(n), 0);

@@ -68,6 +68,10 @@
             <div>Effective messages incl. buffer</div>
             <strong class="mono" id="effective">0</strong>
           </div>
+          <div class="result" id="m365EffWrap" style="display:none">
+            <div>Effective billed messages (with M365 Copilot)</div>
+            <strong class="mono" id="effectiveM365">0</strong>
+          </div>
 
           <div class="row" style="margin-top:10px">
             <div>
@@ -122,12 +126,12 @@
         </section>
 
         <!-- Inspector / Add panel -->
-        <section class="card">
+        <section class="card inspector">
           <h2>Inspector</h2>
           <div class="row">
             <div class="full">
               <label for="nodeName">Step name</label>
-              <input id="nodeName" placeholder="e.g., Retrieve policy" />
+              <input id="nodeName" type="text" placeholder="e.g., Retrieve policy" />
             </div>
             <div>
               <label for="nodeType">Type</label>
