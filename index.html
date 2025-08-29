@@ -37,6 +37,7 @@
             </div>
             <div class="full">
               <div class="switch"><input id="vat" type="checkbox" /><label for="vat">Include VAT (20%)</label></div>
+              <div class="switch" style="margin-top:8px"><input id="m365Apply" type="checkbox" /><label for="m365Apply">Apply Microsoft 365 Copilot licensing to results</label></div>
             </div>
           </div>
 
@@ -44,12 +45,12 @@
             <summary>Advanced pricing (edit if needed)</summary>
             <div class="row" style="margin-top:10px">
               <div>
-                <label for="payg">PAYG price per message (£)</label>
+                <label for="payg">PAYG price per message (&pound;)</label>
                 <input id="payg" type="number" inputmode="decimal" min="0" step="0.0001" value="0.008" />
-                <div class="hint">Assumes $0.01/msg ≈ £0.008 after FX.</div>
+                <div class="hint">Assumes $0.01/msg &asymp; &pound;0.008 after FX.</div>
               </div>
               <div>
-                <label for="packPrice">Message pack price (£)</label>
+                <label for="packPrice">Message pack price (&pound;)</label>
                 <input id="packPrice" type="number" inputmode="decimal" min="0" step="0.01" value="153.80" />
               </div>
               <div>
@@ -67,6 +68,17 @@
             <div>Effective messages incl. buffer</div>
             <strong class="mono" id="effective">0</strong>
           </div>
+
+          <div class="row" style="margin-top:10px">
+            <div>
+              <label for="totalUsers">Total agent users</label>
+              <input id="totalUsers" type="number" inputmode="numeric" min="0" step="1" value="100" />
+            </div>
+            <div>
+              <label for="licensedUsers">Licensed users (M365 Copilot)</label>
+              <input id="licensedUsers" type="number" inputmode="numeric" min="0" step="1" value="0" />
+            </div>
+          </div>
         </section>
 
         <!-- Outputs -->
@@ -77,14 +89,14 @@
           <div class="recommend" id="recCard">
             <div>
               <h3>Recommendation</h3>
-              <div class="muted" id="why">—</div>
+              <div class="muted" id="why">-</div>
             </div>
-            <div class="big" id="recommend">—</div>
+            <div class="big" id="recommend">-</div>
           </div>
 
           <div style="margin-top:10px" class="row">
             <div class="full">
-              <div class="hint">Breakeven (PAYG vs one pack): <span class="mono" id="breakeven">—</span> messages (VAT cancels).</div>
+              <div class="hint">Breakeven (PAYG vs one pack): <span class="mono" id="breakeven">-</span> messages (VAT cancels).</div>
             </div>
           </div>
         </section>
@@ -106,6 +118,7 @@
             <div>Messages per run</div>
             <strong class="mono" id="perRun">0.000</strong>
           </div>
+          
         </section>
 
         <!-- Inspector / Add panel -->
@@ -136,7 +149,7 @@
             <div id="flowActionsWrap" class="full">
               <label for="flowActions">Actions inside flow (per run)</label>
               <input id="flowActions" type="number" min="0" step="1" value="3" />
-              <div class="hint">Message calc for flow: <span class="mono">qty × (5 + 0.13 × actions)</span></div>
+              <div class="hint">Message calc for flow: <span class="mono">qty x (5 + 0.13 x actions)</span></div>
             </div>
             <div class="full actions">
               <button id="addOrUpdateNode" class="btn primary">Add step</button>
@@ -154,6 +167,7 @@
               <input id="expectedVolume" type="number" min="0" step="1" value="1000" />
             </div>
           </div>
+          
           <div class="actions" style="margin-top:12px">
             <button id="pushToCalc" class="btn primary">Send to Calculator</button>
           </div>
@@ -166,4 +180,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
