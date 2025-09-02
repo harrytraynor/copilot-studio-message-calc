@@ -20,10 +20,18 @@
     }
     @media (prefers-color-scheme: dark) {
       :root{
-        --bg:#0b1220; --card:#0f172a; --muted:#94a3b8; --text:#e5e7eb; --accent:#3b82f6; --good:#10b981; --bad:#ef4444; --border:#1f2a44; --ring:0 0 0 3px color-mix(in hsl, var(--accent) 35%, transparent);
-        --shadow-sm: 0 2px 10px rgba(2,6,23,.30);
-        --shadow-md: 0 10px 34px rgba(2,6,23,.45);
+        --bg:#0a0b0f; --card:#0f141a; --muted:#9aa6b2; --text:#f3f4f6; --accent:#60a5fa; --good:#10b981; --bad:#ef4444; --border:#263245; --ring:0 0 0 3px color-mix(in hsl, var(--accent) 45%, transparent);
+        --shadow-sm: 0 2px 12px rgba(0,0,0,.45);
+        --shadow-md: 0 12px 36px rgba(0,0,0,.65);
       }
+      /* Darker background with softer accents */
+      body{ background: radial-gradient(800px 420px at 80% -10%, color-mix(in hsl, var(--accent) 6%, transparent), transparent 60%), var(--bg) }
+      /* Recommendation bubble contrast */
+      .rec-bubble{ background:#0b0b0f; border-color: rgba(255,255,255,.12) }
+      .rec-box{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14) }
+      .rec-label{ color: color-mix(in hsl, white 78%, transparent) }
+      .rec-savings{ background: linear-gradient(180deg, color-mix(in hsl, var(--good) 18%, transparent), transparent 65%); border-color: color-mix(in hsl, var(--good) 60%, rgba(255,255,255,.12)) }
+      .rec-savings .rec-value{ color:#d1fae5 }
     }
     html,body{min-height:100%}
     body{
