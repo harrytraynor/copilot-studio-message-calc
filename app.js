@@ -471,8 +471,12 @@ function renderNodes() {
         </div>
       </div>
       <div class="node-actions">
-        <button class="btn" data-action="edit">Edit</button>
-        <button class="btn" data-action="delete">Delete</button>
+        <button class="icon-btn" data-action="edit" aria-label="Edit" title="Edit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21l3.5-.5L20 7l-3-3L3.5 17.5 3 21z"/><path d="M14 6l3 3"/></svg>
+        </button>
+        <button class="icon-btn danger" data-action="delete" aria-label="Delete" title="Delete">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7l1 12h10l1-12"/><path d="M9 7V5h6v2"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
       </div>`;
     canvas.appendChild(node);
   });
@@ -518,8 +522,10 @@ canvas.addEventListener('click', (e) => {
   const wrap = e.target.closest('.flow-node');
   if (!wrap) return;
   const i = Number(wrap.dataset.i);
-  const action = e.target.dataset.action;
+  const actionEl = e.target.closest('[data-action]');
+  const action = actionEl ? actionEl.dataset.action : undefined;
   if (action === 'delete') { nodes.splice(i, 1); clearInspector(); renderNodes(); return; }
+  if (action === 'edit') { loadInspector(i); renderNodes(); return; }
   loadInspector(i);
   renderNodes();
 });
