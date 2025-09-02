@@ -59,7 +59,7 @@ function calc() {
   const eff = Math.ceil(messages * (1 + bufferPct / 100));
   const vatMult = vatOn ? (1 + vatRate / 100) : 1;
 
-  // Preview: effective billed messages with M365 (if applied)
+  // Preview: effective billed messages with M365 Copilot (if applied)
   const totalUsers = Math.max(0, Math.floor(parse(els.totalUsers)));
   const licensedUsers = Math.max(0, Math.floor(parse(els.licensedUsers)));
   const m365OnPreview = !!(m365Apply && m365Apply.checked) && totalUsers > 0 && licensedUsers > 0;
@@ -615,7 +615,7 @@ function renderExport(){
   // Build HTML tables
   let html = '';
   html += `<div class="section-title">Node breakdown (per run)</div>`;
-  html += `<table class="table"><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Qty</th><th>Actions</th><th>Rate</th><th>Msgs/run</th><th>Covered</th><th>Billed/run${m365On?' (M365)':''}</th></tr></thead><tbody>`;
+  html += `<table class="table"><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Qty</th><th>Actions</th><th>Rate</th><th>Msgs/run</th><th>Covered</th><th>Billed/run${m365On?' (M365 Copilot)':''}</th></tr></thead><tbody>`;
   nodeRows.forEach(r=>{
     html += `<tr><td>${r.idx}</td><td>${r.name}</td><td>${r.type}</td><td>${r.qty}</td><td>${r.actions}</td><td>${r.rate}</td><td>${r.msgs}</td><td>${r.covered}</td><td>${r.billed}</td></tr>`;
   });
@@ -626,13 +626,13 @@ function renderExport(){
   html += `<table class="table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>`;
   html += `<tr><td>Runs/month</td><td>${expected.toLocaleString('en-GB')}</td></tr>`;
   html += `<tr><td>Messages/month (baseline)</td><td>${monthly.toLocaleString('en-GB')}</td></tr>`;
-  html += `<tr><td>Messages/month (with M365)</td><td>${monthlyBilled.toLocaleString('en-GB')}</td></tr>`;
+  html += `<tr><td>Messages/month (with M365 Copilot)</td><td>${monthlyBilled.toLocaleString('en-GB')}</td></tr>`;
   html += `<tr><td>Effective (incl. buffer)</td><td>${eff.toLocaleString('en-GB')}</td></tr>`;
-  html += `<tr><td>Effective with M365 (incl. buffer)</td><td>${effWith.toLocaleString('en-GB')}</td></tr>`;
+  html += `<tr><td>Effective with M365 Copilot (incl. buffer)</td><td>${effWith.toLocaleString('en-GB')}</td></tr>`;
   html += `</tbody></table>`;
 
   html += `<div class="section-title">Pricing summary</div>`;
-  html += `<table class="table"><thead><tr><th>Option</th><th>Baseline</th><th>With M365</th><th>Savings</th></tr></thead><tbody>`;
+  html += `<table class="table"><thead><tr><th>Option</th><th>Baseline</th><th>With M365 Copilot</th><th>Savings</th></tr></thead><tbody>`;
   ['PAYG','Packs','Hybrid'].forEach(k=>{
     const b = costsBase[k]; const w = costsWith[k]; const s = Math.max(0,b-w);
     html += `<tr><td>${k}</td><td>${GBP.format(b)}</td><td>${GBP.format(w)}</td><td>${GBP.format(s)}</td></tr>`;
@@ -651,11 +651,11 @@ function renderExport(){
       lines.push(['Metric','Value'].join('\t'));
       lines.push(['Runs/month', expected].join('\t'));
       lines.push(['Messages/month (baseline)', monthly].join('\t'));
-      lines.push(['Messages/month (with M365)', monthlyBilled].join('\t'));
+      lines.push(['Messages/month (with M365 Copilot)', monthlyBilled].join('\t'));
       lines.push(['Effective (incl. buffer)', eff].join('\t'));
-      lines.push(['Effective with M365 (incl. buffer)', effWith].join('\t'));
+      lines.push(['Effective with M365 Copilot (incl. buffer)', effWith].join('\t'));
       lines.push('');
-      lines.push(['Option','Baseline','With M365','Savings'].join('\t'));
+      lines.push(['Option','Baseline','With M365 Copilot','Savings'].join('\t'));
       ['PAYG','Packs','Hybrid'].forEach(k=>{
         const b = costsBase[k]; const w = costsWith[k]; const s = Math.max(0,b-w);
         lines.push([k, b, w, s].join('\t'));
