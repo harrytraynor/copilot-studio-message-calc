@@ -249,6 +249,16 @@ tabCalc.addEventListener('click', () => switchTab('calc'));
 tabFlow.addEventListener('click', () => switchTab('flow'));
 tabExport && tabExport.addEventListener('click', () => { renderExport(); switchTab('export'); });
 
+// Header nav mirrors the tabs (for the minimal header style)
+document.querySelectorAll('.brand-nav [data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const which = btn.getAttribute('data-tab');
+    if (which === 'export') { renderExport && renderExport(); }
+    switchTab(which);
+    // keep aria state in sync for the pill tabs too
+  });
+});
+
 // ======== Agent builder logic ========
 const canvas = document.getElementById('canvas');
 const nodeName = document.getElementById('nodeName');
