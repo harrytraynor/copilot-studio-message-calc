@@ -179,7 +179,7 @@ function calc() {
     const name = (els.agentName?.value || '').trim();
     els.recAgent.textContent = name || '—';
   }
-  if (els.recCost) els.recCost.textContent = GBP.format(best.cost || 0);
+  if (els.recCost) els.recCost.textContent = GBP.format(baselineMin || 0);
   if (els.recWithWrap && els.recCostWith) {
     const showWith = !!(m365On && withMin != null);
     els.recWithWrap.style.display = showWith ? 'block' : 'none';

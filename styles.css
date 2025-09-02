@@ -130,10 +130,25 @@
     .rec-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
     .rec-title{font-weight:700; letter-spacing:.2px}
     .rec-agent{font-size:12px; color:rgba(255,255,255,.75)}
-    .rec-main{display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; align-items:stretch}
+    /* Top row: Recommended | Monthly | With; Bottom row: Savings spans full width */
+    .rec-main{display:grid; grid-template-columns: repeat(3, 1fr); grid-template-areas:
+      "rec monthly with"
+      "savings savings savings"; gap:10px; align-items:stretch}
+    .rec-recommended{grid-area: rec}
+    .rec-monthly{grid-area: monthly}
+    .rec-with{grid-area: with}
+    .rec-savings{grid-area: savings}
+    @media (max-width: 820px){
+      .rec-main{grid-template-columns: 1fr 1fr; grid-template-areas:
+        "rec monthly"
+        "with with"
+        "savings savings"}
+    }
     @media (max-width: 820px){ .rec-main{grid-template-columns: 1fr 1fr} }
     .rec-box{background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px 14px}
     .rec-box.good{border-color: color-mix(in hsl, var(--good) 55%, rgba(255,255,255,.12)); box-shadow: 0 8px 22px rgba(16,185,129,.18)}
+    .rec-savings{border-width:2px}
+    .rec-savings .rec-value{font-size:24px}
     .rec-label{font-size:12px; opacity:.8}
     .rec-value{font-weight:800; font-size:18px; margin-top:2px}
     .rec-foot{margin-top:8px; font-size:12px; color:rgba(255,255,255,.75)}

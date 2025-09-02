@@ -28,26 +28,26 @@
     <!-- CALCULATOR VIEW -->
     <section id="view-calc" role="tabpanel" aria-labelledby="tab-calc">
       <div class="grid">
-        <!-- Recommendation bubble spanning both columns -->
+        <!-- Recommendation bubble (placed in right column by CSS) -->
         <div class="rec-bubble" id="recCard" role="note" aria-live="polite">
           <div class="rec-head">
             <div class="rec-title">Recommendation</div>
             <div class="rec-agent">Agent: <span id="recAgent">-</span></div>
           </div>
           <div class="rec-main">
-            <div class="rec-box">
+            <div class="rec-box rec-recommended">
               <div class="rec-label">Recommended</div>
               <div class="rec-value" id="recommend">-</div>
             </div>
-            <div class="rec-box">
-              <div class="rec-label">Monthly cost</div>
+            <div class="rec-box rec-monthly">
+              <div class="rec-label">Monthly cost (baseline)</div>
               <div class="rec-value" id="recCost">-</div>
             </div>
-            <div class="rec-box" id="recWithWrap">
+            <div class="rec-box rec-with" id="recWithWrap">
               <div class="rec-label">With M365 Copilot</div>
               <div class="rec-value" id="recCostWith">-</div>
             </div>
-            <div class="rec-box good" id="recSaveWrap">
+            <div class="rec-box rec-savings good" id="recSaveWrap">
               <div class="rec-label">Savings with Copilot</div>
               <div class="rec-value" id="recSave">-</div>
             </div>
