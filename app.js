@@ -26,6 +26,7 @@ const els = {
   packSize: document.getElementById('packSize'),
   vat: document.getElementById('vat'),
   vatRate: document.getElementById('vatRate'),
+  agentName: document.getElementById('agentName'),
   effective: document.getElementById('effective'),
   options: document.getElementById('options'),
   recommend: document.getElementById('recommend'),
@@ -52,6 +53,8 @@ function calc() {
   const packSize = Math.max(1, Math.floor(parse(els.packSize)));
   const vatOn = els.vat.checked;
   const vatRate = Math.max(0, parse(els.vatRate));
+  // keep URL share in sync
+  updateShareUrl();
 
   const eff = Math.ceil(messages * (1 + bufferPct / 100));
   const vatMult = vatOn ? (1 + vatRate / 100) : 1;
@@ -233,6 +236,7 @@ const viewExport = document.getElementById('view-export');
 // Export DOM refs (declared early so renderExport can run during initial calc)
 const breakdown = document.getElementById('breakdown');
 const copyBreakdown = document.getElementById('copyBreakdown');
+const copyShareBtn = document.getElementById('copyShare');
 
 function switchTab(which) {
   const isCalc = which === 'calc';
@@ -258,6 +262,88 @@ document.querySelectorAll('.brand-nav [data-tab]').forEach(btn => {
     // keep aria state in sync for the pill tabs too
   });
 });
+
+// ======== Shareable URL (encoded) ========
+function encodeState(obj){
+  const json = JSON.stringify(obj);
+  const bytes = new TextEncoder().encode(json);
+  let bin = '';
+  bytes.forEach(b=>bin += String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(code){
+  const base = code.replace(/-/g,'+').replace(/_/g,'/');
+  const pad = base.length % 4 ? '='.repeat(4 - (base.length % 4)) : '';
+  const bin = atob(base + pad);
+  const bytes = new Uint8Array([...bin].map(c=>c.charCodeAt(0)));
+  const json = new TextDecoder().decode(bytes);
+  return JSON.parse(json);
+}
+// short codes for node types to keep URL compact
+const TYPE_TO_KEY = { classic:'c', generative:'g', tenant:'t', flow:'f', toolBasic:'b', toolStandard:'s', toolPremium:'p', web:'w' };
+const KEY_TO_TYPE = Object.fromEntries(Object.entries(TYPE_TO_KEY).map(([k,v])=>[v,k]));
+
+function gatherState(){
+  const messages = Math.max(0, Math.floor(parse(els.messages)));
+  const bufferPct = Math.max(0, parse(els.buffer));
+  const paygRate = Math.max(0, parse(els.payg));
+  const packPrice = Math.max(0, parse(els.packPrice));
+  const packSize = Math.max(1, Math.floor(parse(els.packSize)));
+  const vatOn = !!els.vat.checked;
+  const vatRate = Math.max(0, parse(els.vatRate));
+  const totalUsers = Math.max(0, Math.floor(parse(els.totalUsers)));
+  const licensedUsers = Math.max(0, Math.floor(parse(els.licensedUsers)));
+  const m365 = !!(m365Apply && m365Apply.checked);
+  const name = (els.agentName?.value || '').trim();
+  const expectedEl = document.getElementById('expectedVolume');
+  const expected = Math.max(0, Math.floor(parseFloat(expectedEl?.value || '0')||0));
+  const nodesCompact = (typeof nodes !== 'undefined' && Array.isArray(nodes) && nodes.length)
+    ? nodes.map(n => [TYPE_TO_KEY[n.type] || 'c', Math.max(1, n.qty|0), Math.max(0, (n.actions||0)|0), n.name || ''])
+    : [];
+  // compact array to keep URL short; include a version (v2 supports nodes + expected)
+  return { v:2, d:[messages, bufferPct, paygRate, packPrice, packSize, vatOn?1:0, vatRate, totalUsers, licensedUsers, m365?1:0, name, expected, nodesCompact] };
+}
+function applyState(state){
+  try{
+    if(!state || !Array.isArray(state.d)) return;
+    const v = state.v || 1;
+    const baseCount = v >= 2 ? 12 : 11; // number of base fields before extras
+    const [m,b,pg,pp,ps,vatOn,vr,tu,lu,m365,name, expected = 0, nodesCompact = []] = state.d;
+    if(Number.isFinite(m)) els.messages.value = String(m);
+    if(Number.isFinite(b)) els.buffer.value = String(b);
+    if(Number.isFinite(pg)) els.payg.value = String(pg);
+    if(Number.isFinite(pp)) els.packPrice.value = String(pp);
+    if(Number.isFinite(ps)) els.packSize.value = String(ps);
+    if(vatOn!=null) els.vat.checked = !!vatOn;
+    if(Number.isFinite(vr)) els.vatRate.value = String(vr);
+    if(Number.isFinite(tu)) els.totalUsers.value = String(tu);
+    if(Number.isFinite(lu)) els.licensedUsers.value = String(lu);
+    if(m365!=null && m365Apply) m365Apply.checked = !!m365;
+    if(els.agentName && typeof name === 'string') els.agentName.value = name;
+    const expectedEl = document.getElementById('expectedVolume');
+    if(expectedEl && Number.isFinite(expected)) expectedEl.value = String(expected);
+    if(Array.isArray(nodesCompact) && typeof nodes !== 'undefined'){
+      nodes = nodesCompact.map((row, i) => {
+        const [key, qty, actions, nm] = row;
+        return {
+          id: ++uid,
+          name: typeof nm === 'string' ? nm : '',
+          type: KEY_TO_TYPE[key] || 'classic',
+          qty: Math.max(1, parseInt(qty)||1),
+          actions: Math.max(0, parseInt(actions)||0)
+        };
+      });
+    }
+  }catch(e){ /* ignore */ }
+}
+function updateShareUrl(){
+  const state = gatherState();
+  const code = encodeState(state);
+  const url = new URL(window.location);
+  url.searchParams.set('s', code);
+  window.history.replaceState(null, '', url);
+}
+// defer applying URL state until after nodes/uid exist (declared below)
 
 // ======== Agent builder logic ========
 const canvas = document.getElementById('canvas');
@@ -285,6 +371,15 @@ const m365CostWith = document.getElementById('m365CostWith');
 let nodes = [];
 let selected = -1;
 let uid = 0;
+
+// Load from URL (if present) once now that nodes/uid exist
+(() => {
+  try{
+    const url = new URL(window.location);
+    const code = url.searchParams.get('s');
+    if(code){ applyState(decodeState(code)); }
+  }catch(e){ /* ignore */ }
+})();
 
 const typeToRate = (t, actions = 0) => ({
   classic: 1,
@@ -361,8 +456,11 @@ function renderNodes() {
   // Sync calculator: total monthly messages = perRun * expected runs
   const expected = Math.max(0, Math.floor(parseFloat(expectedVolume.value) || 0));
   const totalMonthly = Math.ceil(perRunTotal * expected);
-  els.messages.value = totalMonthly;
+  if (nodes.length > 0 && expected > 0) {
+    els.messages.value = totalMonthly;
+  }
   calc();
+  updateShareUrl();
   if (typeof renderExport === 'function') renderExport();
 }
 
@@ -442,6 +540,7 @@ moveDown.addEventListener('click', () => {
 [els.totalUsers, els.licensedUsers]
   .forEach(el => el.addEventListener('input', calc));
 if (m365Apply) m365Apply.addEventListener('change', calc);
+if (els.agentName) els.agentName.addEventListener('input', updateShareUrl);
 nodeType.addEventListener('change', showFlowActions);
 
 pushToCalc.addEventListener('click', () => { switchTab('calc'); });
@@ -569,6 +668,19 @@ function renderExport(){
         // Fallback
         const ta = document.createElement('textarea'); ta.value = tsv; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
         copyBreakdown.textContent = 'Copied!'; setTimeout(()=>copyBreakdown.textContent='Copy as TSV',1200);
+      });
+    };
+  }
+  if(copyShareBtn){
+    copyShareBtn.onclick = () => {
+      updateShareUrl();
+      const link = window.location.href;
+      navigator.clipboard?.writeText(link).then(()=>{
+        copyShareBtn.textContent = 'Link copied!';
+        setTimeout(()=>copyShareBtn.textContent='Copy Share URL',1200);
+      }).catch(()=>{
+        const ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+        copyShareBtn.textContent = 'Link copied!'; setTimeout(()=>copyShareBtn.textContent='Copy Share URL',1200);
       });
     };
   }
