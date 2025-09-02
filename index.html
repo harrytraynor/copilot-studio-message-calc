@@ -28,6 +28,34 @@
     <!-- CALCULATOR VIEW -->
     <section id="view-calc" role="tabpanel" aria-labelledby="tab-calc">
       <div class="grid">
+        <!-- Recommendation bubble spanning both columns -->
+        <div class="rec-bubble" id="recCard" role="note" aria-live="polite">
+          <div class="rec-head">
+            <div class="rec-title">Recommendation</div>
+            <div class="rec-agent">Agent: <span id="recAgent">-</span></div>
+          </div>
+          <div class="rec-main">
+            <div class="rec-box">
+              <div class="rec-label">Recommended</div>
+              <div class="rec-value" id="recommend">-</div>
+            </div>
+            <div class="rec-box">
+              <div class="rec-label">Monthly cost</div>
+              <div class="rec-value" id="recCost">-</div>
+            </div>
+            <div class="rec-box" id="recWithWrap">
+              <div class="rec-label">With M365 Copilot</div>
+              <div class="rec-value" id="recCostWith">-</div>
+            </div>
+            <div class="rec-box good" id="recSaveWrap">
+              <div class="rec-label">Savings with Copilot</div>
+              <div class="rec-value" id="recSave">-</div>
+            </div>
+          </div>
+          <div class="rec-foot">
+            <div class="rec-why" id="why">-</div>
+          </div>
+        </div>
         <!-- Inputs -->
         <section class="card" aria-labelledby="inputs">
           <h2 id="inputs">Inputs</h2>
@@ -99,20 +127,14 @@
           <h2 id="outputs">Results</h2>
           <div id="options"></div>
 
-          <div class="recommend" id="recCard">
-            <div>
-              <h3>Recommendation</h3>
-              <div class="muted" id="why">-</div>
-            </div>
-            <div class="big" id="recommend">-</div>
-          </div>
-
           <div style="margin-top:10px" class="row">
             <div class="full">
               <div class="hint">Breakeven (PAYG vs one pack): <span class="mono" id="breakeven">-</span> messages (VAT cancels).</div>
             </div>
           </div>
         </section>
+
+        
       </div>
 
       <footer>

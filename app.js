@@ -33,6 +33,12 @@ const els = {
   why: document.getElementById('why'),
   breakeven: document.getElementById('breakeven'),
   recCard: document.getElementById('recCard'),
+  recAgent: document.getElementById('recAgent'),
+  recCost: document.getElementById('recCost'),
+  recCostWith: document.getElementById('recCostWith'),
+  recSave: document.getElementById('recSave'),
+  recSaveWrap: document.getElementById('recSaveWrap'),
+  recWithWrap: document.getElementById('recWithWrap'),
   totalUsers: document.getElementById('totalUsers'),
   licensedUsers: document.getElementById('licensedUsers'),
   effectiveM365: document.getElementById('effectiveM365'),
@@ -114,6 +120,10 @@ function calc() {
   els.recommend.textContent = best.title;
   els.why.textContent = `Saves ${GBP.format(second.cost - best.cost)} vs ${second.title} this month.`;
 
+  // Baseline min cost (for comparisons / bubble)
+  const baselineMin = Math.min(paygCost, packCost, hybridCost);
+  let withMin = null;
+
   // Optional M365-adjusted costs (calculator-level)
   let withCosts = null;
   const m365On = m365OnPreview;
@@ -133,6 +143,7 @@ function calc() {
     const hybridCostWith = (packsFloorWith * packPrice * vatMult) + (remainderWith === 0 ? 0 : Math.min(remainderCostPaygWith, onePackCostWith));
     const paygCostWith = effWith * paygRate * vatMult;
     withCosts = { PAYG: paygCostWith, Packs: packCostWith, Hybrid: hybridCostWith };
+    withMin = Math.min(paygCostWith, packCostWith, hybridCostWith);
   }
 
   // If M365 is applied, recompute displayed option costs and recommendation
@@ -161,6 +172,23 @@ function calc() {
     second = optionsArr[1] ?? optionsArr[0];
     els.recommend.textContent = best.title;
     els.why.textContent = `Saves ${GBP.format(second.cost - best.cost)} vs ${second.title} this month.`;
+  }
+
+  // Update recommendation bubble values
+  if (els.recAgent) {
+    const name = (els.agentName?.value || '').trim();
+    els.recAgent.textContent = name || '—';
+  }
+  if (els.recCost) els.recCost.textContent = GBP.format(best.cost || 0);
+  if (els.recWithWrap && els.recCostWith) {
+    const showWith = !!(m365On && withMin != null);
+    els.recWithWrap.style.display = showWith ? 'block' : 'none';
+    els.recSaveWrap && (els.recSaveWrap.style.display = showWith ? 'block' : 'none');
+    if (showWith) {
+      els.recCostWith.textContent = GBP.format(withMin);
+      const savings = Math.max(0, baselineMin - withMin);
+      if (els.recSave) els.recSave.textContent = savings > 0 ? GBP.format(savings) : '£0.00';
+    }
   }
 
   // Render options
