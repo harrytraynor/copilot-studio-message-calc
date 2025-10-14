@@ -19,7 +19,7 @@ function bestMonthlyCostForEff(eff, paygRate, packPrice, packSize, vatMult) {
 
 // ======== Shared els for Calculator ========
 const els = {
-  messages: document.getElementById('messages'),
+  credits: document.getElementById('credits'),
   buffer: document.getElementById('buffer'),
   payg: document.getElementById('payg'),
   packPrice: document.getElementById('packPrice'),
@@ -52,7 +52,7 @@ const parse = (el, def = 0) => {
 };
 
 function calc() {
-  const messages = Math.max(0, Math.floor(parse(els.messages)));
+  const credits = Math.max(0, Math.floor(parse(els.credits)));
   const bufferPct = Math.max(0, parse(els.buffer));
   const paygRate = Math.max(0, parse(els.payg));
   const packPrice = Math.max(0, parse(els.packPrice));
@@ -62,17 +62,17 @@ function calc() {
   // keep URL share in sync
   updateShareUrl();
 
-  const eff = Math.ceil(messages * (1 + bufferPct / 100));
+  const eff = Math.ceil(credits * (1 + bufferPct / 100));
   const vatMult = vatOn ? (1 + vatRate / 100) : 1;
 
-  // Preview: effective billed messages with M365 Copilot (if applied)
+  // Preview: effective billed Copilot credits with M365 Copilot (if applied)
   const totalUsers = Math.max(0, Math.floor(parse(els.totalUsers)));
   const licensedUsers = Math.max(0, Math.floor(parse(els.licensedUsers)));
   const m365OnPreview = !!(m365Apply && m365Apply.checked) && totalUsers > 0 && licensedUsers > 0;
   let effM365 = eff;
   if (m365OnPreview) {
-    const totalRatePrev = (typeof nodes !== 'undefined') ? nodes.reduce((s, n) => s + nodeMsgs(n), 0) : 0;
-    const coveredRatePrev = (typeof nodes !== 'undefined') ? nodes.filter(n => M365_COVERED_TYPES.has(n.type)).reduce((s, n) => s + nodeMsgs(n), 0) : 0;
+    const totalRatePrev = (typeof nodes !== 'undefined') ? nodes.reduce((s, n) => s + nodeCredits(n), 0) : 0;
+    const coveredRatePrev = (typeof nodes !== 'undefined') ? nodes.filter(n => M365_COVERED_TYPES.has(n.type)).reduce((s, n) => s + nodeCredits(n), 0) : 0;
     const coveredFracPrev = totalRatePrev > 0 ? Math.min(1, coveredRatePrev / totalRatePrev) : 1; // assume fully covered if no flow
     const sharePrev = Math.min(1, licensedUsers / totalUsers);
     effM365 = Math.ceil(eff * (1 - sharePrev * coveredFracPrev));
@@ -84,13 +84,13 @@ function calc() {
 
   // PAYG
   const paygCost = eff * paygRate * vatMult;
-  const paygEffectivePerMsg = paygRate * vatMult;
+  const paygEffectivePerCredit = paygRate * vatMult;
 
   // Packs
   const packs = Math.ceil(eff / packSize);
   const packCost = packs * packPrice * vatMult;
   const packWaste = packs * packSize - eff;
-  const packEffectivePerMsg = packCost / eff;
+  const packEffectivePerCredit = packCost / eff;
 
   // Hybrid (Packs + PAYG for overspill)
   const packsFloor = Math.floor(eff / packSize);
@@ -101,7 +101,7 @@ function calc() {
   const hybridPacks = packsFloor + (remainder > 0 && remainderStrategy === 'Pack' ? 1 : 0);
   const hybridCost = (packsFloor * packPrice * vatMult) + (remainder === 0 ? 0 : Math.min(remainderCostPayg, onePackCost));
   const hybridWaste = remainderStrategy === 'Pack' ? (packSize - remainder) : 0;
-  const hybridEffectivePerMsg = hybridCost / eff;
+  const hybridEffectivePerCredit = hybridCost / eff;
 
   // Breakeven (ex-VAT; VAT cancels)
   const breakeven = paygRate > 0 ? Math.ceil(packPrice / paygRate) : Infinity;
@@ -110,9 +110,9 @@ function calc() {
   els.breakeven.textContent = Number.isFinite(breakeven) ? breakeven.toLocaleString('en-GB') : 'infinite';
 
   let optionsArr = [
-    { key: 'PAYG', title: 'PAYG', cost: paygCost, perMsg: paygEffectivePerMsg },
-    { key: 'Packs', title: 'Message Packs', cost: packCost, perMsg: packEffectivePerMsg },
-    { key: 'Hybrid', title: 'Hybrid (Packs + PAYG)', cost: hybridCost, perMsg: hybridEffectivePerMsg }
+    { key: 'PAYG', title: 'PAYG', cost: paygCost, perCredit: paygEffectivePerCredit },
+    { key: 'Packs', title: 'Copilot Credit Packs', cost: packCost, perCredit: packEffectivePerCredit },
+    { key: 'Hybrid', title: 'Hybrid (Packs + PAYG)', cost: hybridCost, perCredit: hybridEffectivePerCredit }
   ].sort((a, b) => a.cost - b.cost);
 
   let best = optionsArr[0];
@@ -129,8 +129,8 @@ function calc() {
   const m365On = m365OnPreview;
   if (m365On) {
     // Determine covered fraction from Agent Builder mix if available; otherwise assume 100% covered
-    const totalRate = nodes.reduce((s, n) => s + nodeMsgs(n), 0);
-    const coveredRate = nodes.filter(n => M365_COVERED_TYPES.has(n.type)).reduce((s, n) => s + nodeMsgs(n), 0);
+    const totalRate = nodes.reduce((s, n) => s + nodeCredits(n), 0);
+    const coveredRate = nodes.filter(n => M365_COVERED_TYPES.has(n.type)).reduce((s, n) => s + nodeCredits(n), 0);
     const coveredFrac = totalRate > 0 ? Math.min(1, coveredRate / totalRate) : 1;
     const share = Math.min(1, licensedUsers / totalUsers);
     const effWith = Math.ceil(eff * (1 - share * coveredFrac));
@@ -148,25 +148,25 @@ function calc() {
 
   // If M365 is applied, recompute displayed option costs and recommendation
   let useCosts = { PAYG: paygCost, Packs: packCost, Hybrid: hybridCost };
-  let usePerMsg = { PAYG: paygEffectivePerMsg, Packs: packEffectivePerMsg, Hybrid: hybridEffectivePerMsg };
+  let usePerCredit = { PAYG: paygEffectivePerCredit, Packs: packEffectivePerCredit, Hybrid: hybridEffectivePerCredit };
   let effUsedForMeta = eff;
   if (m365On && withCosts) {
-    const totalRate2 = nodes.reduce((s, n) => s + nodeMsgs(n), 0);
-    const coveredRate2 = nodes.filter(n => M365_COVERED_TYPES.has(n.type)).reduce((s, n) => s + nodeMsgs(n), 0);
+    const totalRate2 = nodes.reduce((s, n) => s + nodeCredits(n), 0);
+    const coveredRate2 = nodes.filter(n => M365_COVERED_TYPES.has(n.type)).reduce((s, n) => s + nodeCredits(n), 0);
     const coveredFrac2 = totalRate2 > 0 ? Math.min(1, coveredRate2 / totalRate2) : 1;
     const share2 = Math.min(1, licensedUsers / totalUsers);
     const effWith2 = Math.ceil(eff * (1 - share2 * coveredFrac2));
     effUsedForMeta = effWith2;
     useCosts = withCosts;
-    usePerMsg = {
+    usePerCredit = {
       PAYG: effWith2 > 0 ? withCosts.PAYG / effWith2 : 0,
       Packs: effWith2 > 0 ? withCosts.Packs / effWith2 : 0,
       Hybrid: effWith2 > 0 ? withCosts.Hybrid / effWith2 : 0
     };
     optionsArr = [
-      { key: 'PAYG', title: 'PAYG', cost: useCosts.PAYG, perMsg: usePerMsg.PAYG },
-      { key: 'Packs', title: 'Message Packs', cost: useCosts.Packs, perMsg: usePerMsg.Packs },
-      { key: 'Hybrid', title: 'Hybrid (Packs + PAYG)', cost: useCosts.Hybrid, perMsg: usePerMsg.Hybrid }
+      { key: 'PAYG', title: 'PAYG', cost: useCosts.PAYG, perCredit: usePerCredit.PAYG },
+      { key: 'Packs', title: 'Copilot Credit Packs', cost: useCosts.Packs, perCredit: usePerCredit.Packs },
+      { key: 'Hybrid', title: 'Hybrid (Packs + PAYG)', cost: useCosts.Hybrid, perCredit: usePerCredit.Hybrid }
     ].sort((a, b) => a.cost - b.cost);
     best = optionsArr[0];
     second = optionsArr[1] ?? optionsArr[0];
@@ -195,7 +195,7 @@ function calc() {
   els.options.innerHTML = '';
   const frag = document.createDocumentFragment();
 
-  const makeRow = (title, key, price, perMsg, meta = []) => {
+  const makeRow = (title, key, price, perCredit, meta = []) => {
     const wrap = document.createElement('div');
     wrap.className = 'option' + (title === best.title ? ' good' : '');
     const titleEl = document.createElement('h3');
@@ -215,21 +215,21 @@ function calc() {
     wrap.appendChild(metaEl);
     const badge = document.createElement('div');
     badge.className = 'badge';
-    badge.textContent = `~ ${GBP.format(perMsg * 1000)} / 1k msgs`;
+    badge.textContent = `~ ${GBP.format(perCredit * 1000)} / 1k credits`;
     wrap.appendChild(badge);
     frag.appendChild(wrap);
   };
 
-  makeRow('PAYG', 'PAYG', useCosts.PAYG, usePerMsg.PAYG, [
-    `${effUsedForMeta.toLocaleString('en-GB')} msgs x ${GBP.format(paygRate)} each${vatOn ? ` + VAT` : ''}`
+  makeRow('PAYG', 'PAYG', useCosts.PAYG, usePerCredit.PAYG, [
+    `${effUsedForMeta.toLocaleString('en-GB')} credits x ${GBP.format(paygRate)} each${vatOn ? ` + VAT` : ''}`
   ]);
 
   // Compute displayed pack metrics
   const packsShown = (m365On && withCosts) ? Math.ceil(effUsedForMeta / packSize) : packs;
   const packWasteShown = (m365On && withCosts) ? (packsShown * packSize - effUsedForMeta) : packWaste;
-  makeRow('Message Packs', 'Packs', useCosts.Packs, usePerMsg.Packs, [
-    `${packsShown} x ${GBP.format(packPrice)} pack${packsShown !== 1 ? 's' : ''} (${packSize.toLocaleString('en-GB')} msgs each)${vatOn ? ` + VAT` : ''}`,
-    packWasteShown > 0 ? `${packWasteShown.toLocaleString('en-GB')} unused msgs this month` : 'no unused messages'
+  makeRow('Copilot Credit Packs', 'Packs', useCosts.Packs, usePerCredit.Packs, [
+    `${packsShown} x ${GBP.format(packPrice)} pack${packsShown !== 1 ? 's' : ''} (${packSize.toLocaleString('en-GB')} credits each)${vatOn ? ` + VAT` : ''}`,
+    packWasteShown > 0 ? `${packWasteShown.toLocaleString('en-GB')} unused credits this month` : 'no unused credits this month'
   ]);
 
   // Compute displayed hybrid metrics
@@ -238,11 +238,11 @@ function calc() {
   const strat = rem === 0 ? 'none' : ((rem * paygRate * vatMult) <= (packPrice * vatMult) ? 'PAYG' : 'Pack');
   const hybridPacksShown = pf + (rem > 0 && strat === 'Pack' ? 1 : 0);
   const hybridUnused = strat === 'Pack' ? (packSize - rem) : 0;
-  makeRow('Hybrid (Packs + PAYG)', 'Hybrid', useCosts.Hybrid, usePerMsg.Hybrid, [
+  makeRow('Hybrid (Packs + PAYG)', 'Hybrid', useCosts.Hybrid, usePerCredit.Hybrid, [
     `${hybridPacksShown} x ${GBP.format(packPrice)} pack${hybridPacksShown !== 1 ? 's' : ''}${
-      rem > 0 ? (strat === 'PAYG' ? ` + ${rem.toLocaleString('en-GB')} msgs via PAYG` : ' (overspill covered by extra pack)') : ''
+      rem > 0 ? (strat === 'PAYG' ? ` + ${rem.toLocaleString('en-GB')} credits via PAYG` : ' (overspill covered by extra pack)') : ''
     }${vatOn ? ` + VAT` : ''}`,
-    hybridUnused > 0 ? `${hybridUnused.toLocaleString('en-GB')} unused msgs this month` : 'no unused messages'
+    hybridUnused > 0 ? `${hybridUnused.toLocaleString('en-GB')} unused credits this month` : 'no unused credits this month'
   ]);
 
   els.options.appendChild(frag);
@@ -251,7 +251,7 @@ function calc() {
 }
 
 // Bind calculator inputs
-[els.messages, els.buffer, els.payg, els.packPrice, els.packSize, els.vat, els.vatRate]
+[els.credits, els.buffer, els.payg, els.packPrice, els.packSize, els.vat, els.vatRate]
   .forEach(el => el.addEventListener('input', calc));
 
 // ======== Tabs ========
@@ -312,7 +312,7 @@ const TYPE_TO_KEY = { classic:'c', generative:'g', tenant:'t', flow:'f', toolBas
 const KEY_TO_TYPE = Object.fromEntries(Object.entries(TYPE_TO_KEY).map(([k,v])=>[v,k]));
 
 function gatherState(){
-  const messages = Math.max(0, Math.floor(parse(els.messages)));
+  const credits = Math.max(0, Math.floor(parse(els.credits)));
   const bufferPct = Math.max(0, parse(els.buffer));
   const paygRate = Math.max(0, parse(els.payg));
   const packPrice = Math.max(0, parse(els.packPrice));
@@ -329,15 +329,15 @@ function gatherState(){
     ? nodes.map(n => [TYPE_TO_KEY[n.type] || 'c', Math.max(1, n.qty|0), Math.max(0, (n.actions||0)|0), n.name || ''])
     : [];
   // compact array to keep URL short; include a version (v2 supports nodes + expected)
-  return { v:2, d:[messages, bufferPct, paygRate, packPrice, packSize, vatOn?1:0, vatRate, totalUsers, licensedUsers, m365?1:0, name, expected, nodesCompact] };
+  return { v:2, d:[credits, bufferPct, paygRate, packPrice, packSize, vatOn?1:0, vatRate, totalUsers, licensedUsers, m365?1:0, name, expected, nodesCompact] };
 }
 function applyState(state){
   try{
     if(!state || !Array.isArray(state.d)) return;
     const v = state.v || 1;
     const baseCount = v >= 2 ? 12 : 11; // number of base fields before extras
-    const [m,b,pg,pp,ps,vatOn,vr,tu,lu,m365,name, expected = 0, nodesCompact = []] = state.d;
-    if(Number.isFinite(m)) els.messages.value = String(m);
+    const [c,b,pg,pp,ps,vatOn,vr,tu,lu,m365,name, expected = 0, nodesCompact = []] = state.d;
+    if(Number.isFinite(c)) els.credits.value = String(c);
     if(Number.isFinite(b)) els.buffer.value = String(b);
     if(Number.isFinite(pg)) els.payg.value = String(pg);
     if(Number.isFinite(pp)) els.packPrice.value = String(pp);
@@ -437,7 +437,7 @@ function showFlowActions() {
 nodeType.addEventListener('change', showFlowActions);
 showFlowActions();
 
-function nodeMsgs(n) {
+function nodeCredits(n) {
   const rate = typeToRate(n.type, n.actions || 0);
   return +(rate * n.qty).toFixed(3);
 }
@@ -449,7 +449,7 @@ function coverageRatio() {
   return Math.max(0, Math.min(1, licensed / total));
 }
 
-function nodeMsgsBilled(n, m365On, ratio) {
+function nodeCreditsBilled(n, m365On, ratio) {
   let rate = typeToRate(n.type, n.actions || 0);
   if (m365On && M365_COVERED_TYPES.has(n.type)) rate = rate * (1 - ratio);
   return +(rate * n.qty).toFixed(3);
@@ -465,7 +465,7 @@ function renderNodes() {
       <div class="pill">${i + 1}</div>
       <div>
         <h4>${n.name || typeLabel(n.type)}</h4>
-        <div class="meta">${typeLabel(n.type)}${n.type === 'flow' ? ` | ${n.actions} actions` : ''} | qty ${n.qty} | ${nodeMsgs(n)} msgs</div>
+        <div class="meta">${typeLabel(n.type)}${n.type === 'flow' ? ` | ${n.actions} actions` : ''} | qty ${n.qty} | ${nodeCredits(n)} credits</div>
         <div class="node-badges">
           <span class="node-badge">rate ${typeToRate(n.type, n.actions || 0)}</span>
         </div>
@@ -482,14 +482,14 @@ function renderNodes() {
   });
 
   // Totals
-  let perRunTotal = nodes.reduce((s, n) => s + nodeMsgs(n), 0);
+  let perRunTotal = nodes.reduce((s, n) => s + nodeCredits(n), 0);
   perRun.textContent = perRunTotal.toFixed(3);
   
-  // Sync calculator: total monthly messages = perRun * expected runs
+  // Sync calculator: total monthly Copilot credits = perRun * expected runs
   const expected = Math.max(0, Math.floor(parseFloat(expectedVolume.value) || 0));
   const totalMonthly = Math.ceil(perRunTotal * expected);
   if (nodes.length > 0 && expected > 0) {
-    els.messages.value = totalMonthly;
+    els.credits.value = totalMonthly;
   }
   calc();
   updateShareUrl();
@@ -598,10 +598,10 @@ function renderExport(){
   let perRunTotal = 0, perRunBilled = 0;
   nodes.forEach((n,i)=>{
     const rate = typeToRate(n.type, n.actions||0);
-    const msgs = +(rate * n.qty).toFixed(3);
+    const credits = +(rate * n.qty).toFixed(3);
     const covered = M365_COVERED_TYPES.has(n.type);
-    const billed = +(msgs * (covered? (1-share):1)).toFixed(3);
-    perRunTotal += msgs; perRunBilled += billed;
+    const billed = +(credits * (covered? (1-share):1)).toFixed(3);
+    perRunTotal += credits; perRunBilled += billed;
     nodeRows.push({
       idx:i+1,
       name:n.name || typeLabel(n.type),
@@ -609,7 +609,7 @@ function renderExport(){
       qty:n.qty,
       actions:n.type==='flow'?(n.actions||0):'',
       rate,
-      msgs,
+      credits,
       covered: covered?'Yes':'No',
       billed
     });
@@ -649,9 +649,9 @@ function renderExport(){
   // Build HTML tables
   let html = '';
   html += `<div class="section-title">Node breakdown (per run)</div>`;
-  html += `<table class="table"><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Qty</th><th>Actions</th><th>Rate</th><th>Msgs/run</th><th>Covered</th><th>Billed/run${m365On?' (M365 Copilot)':''}</th></tr></thead><tbody>`;
+  html += `<table class="table"><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Qty</th><th>Actions</th><th>Rate</th><th>Credits/run</th><th>Covered</th><th>Billed/run${m365On?' (M365 Copilot)':''}</th></tr></thead><tbody>`;
   nodeRows.forEach(r=>{
-    html += `<tr><td>${r.idx}</td><td>${r.name}</td><td>${r.type}</td><td>${r.qty}</td><td>${r.actions}</td><td>${r.rate}</td><td>${r.msgs}</td><td>${r.covered}</td><td>${r.billed}</td></tr>`;
+    html += `<tr><td>${r.idx}</td><td>${r.name}</td><td>${r.type}</td><td>${r.qty}</td><td>${r.actions}</td><td>${r.rate}</td><td>${r.credits}</td><td>${r.covered}</td><td>${r.billed}</td></tr>`;
   });
   html += `<tr><td colspan="6"><strong>Totals</strong></td><td><strong>${perRunTotal.toFixed(3)}</strong></td><td></td><td><strong>${perRunBilled.toFixed(3)}</strong></td></tr>`;
   html += `</tbody></table>`;
@@ -659,8 +659,8 @@ function renderExport(){
   html += `<div class="section-title">Volumes (monthly)</div>`;
   html += `<table class="table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>`;
   html += `<tr><td>Runs/month</td><td>${expected.toLocaleString('en-GB')}</td></tr>`;
-  html += `<tr><td>Messages/month (baseline)</td><td>${monthly.toLocaleString('en-GB')}</td></tr>`;
-  html += `<tr><td>Messages/month (with M365 Copilot)</td><td>${monthlyBilled.toLocaleString('en-GB')}</td></tr>`;
+  html += `<tr><td>Copilot credits/month (baseline)</td><td>${monthly.toLocaleString('en-GB')}</td></tr>`;
+  html += `<tr><td>Copilot credits/month (with M365 Copilot)</td><td>${monthlyBilled.toLocaleString('en-GB')}</td></tr>`;
   html += `<tr><td>Effective (incl. buffer)</td><td>${eff.toLocaleString('en-GB')}</td></tr>`;
   html += `<tr><td>Effective with M365 Copilot (incl. buffer)</td><td>${effWith.toLocaleString('en-GB')}</td></tr>`;
   html += `</tbody></table>`;
@@ -679,13 +679,13 @@ function renderExport(){
   if(copyBreakdown){
     copyBreakdown.onclick = () => {
       const lines = [];
-      lines.push(['#','Name','Type','Qty','Actions','Rate','Msgs/run','Covered','Billed/run'].join('\t'));
-      nodeRows.forEach(r=>lines.push([r.idx,r.name,r.type,r.qty,r.actions,r.rate,r.msgs,r.covered,r.billed].join('\t')));
+      lines.push(['#','Name','Type','Qty','Actions','Rate','Credits/run','Covered','Billed/run'].join('\t'));
+      nodeRows.forEach(r=>lines.push([r.idx,r.name,r.type,r.qty,r.actions,r.rate,r.credits,r.covered,r.billed].join('\t')));
       lines.push('');
       lines.push(['Metric','Value'].join('\t'));
       lines.push(['Runs/month', expected].join('\t'));
-      lines.push(['Messages/month (baseline)', monthly].join('\t'));
-      lines.push(['Messages/month (with M365 Copilot)', monthlyBilled].join('\t'));
+      lines.push(['Copilot credits/month (baseline)', monthly].join('\t'));
+      lines.push(['Copilot credits/month (with M365 Copilot)', monthlyBilled].join('\t'));
       lines.push(['Effective (incl. buffer)', eff].join('\t'));
       lines.push(['Effective with M365 Copilot (incl. buffer)', effWith].join('\t'));
       lines.push('');

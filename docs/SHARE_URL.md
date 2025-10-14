@@ -11,7 +11,7 @@ Payload shape
 - `d` is a compact array whose element order is fixed by version.
 
 Version 2 (current)
-- d[0]  messages: integer
+- d[0]  copilotCredits: integer
 - d[1]  bufferPct: number
 - d[2]  paygRate: number
 - d[3]  packPrice: number

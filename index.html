@@ -65,8 +65,8 @@
               <input id="agentName" type="text" placeholder="e.g., Policy helper" />
             </div>
             <div>
-              <label for="messages">Projected messages (per month)</label>
-              <input id="messages" type="number" inputmode="numeric" min="0" step="1" value="50000" />
+              <label for="credits">Projected Copilot credits (per month)</label>
+              <input id="credits" type="number" inputmode="numeric" min="0" step="1" value="50000" />
             </div>
             <div>
               <label for="buffer">Buffer (%)</label>
@@ -82,16 +82,16 @@
             <summary>Advanced pricing (edit if needed)</summary>
             <div class="row" style="margin-top:10px">
               <div>
-                <label for="payg">PAYG price per message (&pound;)</label>
+                <label for="payg">PAYG price per Copilot credit (&pound;)</label>
                 <input id="payg" type="number" inputmode="decimal" min="0" step="0.0001" value="0.008" />
                 <div class="hint">Assumes $0.01/msg &asymp; &pound;0.008 after FX.</div>
               </div>
               <div>
-                <label for="packPrice">Message pack price (&pound;)</label>
+                <label for="packPrice">Copilot credit pack price (&pound;)</label>
                 <input id="packPrice" type="number" inputmode="decimal" min="0" step="0.01" value="153.80" />
               </div>
               <div>
-                <label for="packSize">Message pack size</label>
+                <label for="packSize">Copilot credit pack size</label>
                 <input id="packSize" type="number" inputmode="numeric" min="1" step="1" value="25000" />
               </div>
               <div>
@@ -102,11 +102,11 @@
           </details>
 
           <div class="result">
-            <div>Effective messages incl. buffer</div>
+            <div>Effective Copilot credits incl. buffer</div>
             <strong class="mono" id="effective">0</strong>
           </div>
           <div class="result" id="m365EffWrap" style="display:none">
-            <div>Effective billed messages (with M365 Copilot)</div>
+            <div>Effective billed Copilot credits (with M365 Copilot)</div>
             <strong class="mono" id="effectiveM365">0</strong>
           </div>
 
@@ -129,7 +129,7 @@
 
           <div style="margin-top:10px" class="row">
             <div class="full">
-              <div class="hint">Breakeven (PAYG vs one pack): <span class="mono" id="breakeven">-</span> messages (VAT cancels).</div>
+              <div class="hint">Breakeven (PAYG vs one pack): <span class="mono" id="breakeven">-</span> Copilot credits (VAT cancels).</div>
             </div>
           </div>
         </section>
@@ -138,8 +138,8 @@
       </div>
 
       <footer>
-        <p>Assumptions: UK list prices (ex-VAT). PAYG in GBP fluctuates with FX; adjust per-message if needed. Packs are whole-unit (ceil to full packs). "Buffer" multiplies your volume before pricing.</p>
-        <p>Disclaimer: This calculator provides average estimates based on your inputs and simplified assumptions. Actual costs vary with real usage patterns, message mix, grounding/tooling, and licensing coverage. Use production telemetry to validate; this is an estimate, not a quote.</p>
+        <p>Assumptions: UK list prices (ex-VAT). PAYG in GBP fluctuates with FX; adjust per-credit if needed. Packs are whole-unit (ceil to full packs). "Buffer" multiplies your volume before pricing.</p>
+        <p>Disclaimer: This calculator provides average estimates based on your inputs and simplified assumptions. Actual costs vary with real usage patterns, credit mix, grounding/tooling, and licensing coverage. Use production telemetry to validate; this is an estimate, not a quote.</p>
       </footer>
     </section>
 
@@ -151,7 +151,7 @@
           <h2>Agent builder</h2>
           <div id="canvas" class="flow-canvas"></div>
           <div class="result">
-            <div>Messages per run</div>
+            <div>Copilot credits per run</div>
             <strong class="mono" id="perRun">0.000</strong>
           </div>
           
@@ -185,7 +185,7 @@
             <div id="flowActionsWrap" class="full">
               <label for="flowActions">Actions inside flow (per run)</label>
               <input id="flowActions" type="number" min="0" step="1" value="3" />
-              <div class="hint">Message calc for flow: <span class="mono">qty x (5 + 0.13 x actions)</span></div>
+              <div class="hint">Copilot credit calc for flow: <span class="mono">qty x (5 + 0.13 x actions)</span></div>
             </div>
             <div class="full actions">
               <button id="addOrUpdateNode" class="btn primary">Add step</button>
@@ -207,7 +207,7 @@
           <div class="actions" style="margin-top:12px">
             <button id="pushToCalc" class="btn primary">Send to Calculator</button>
           </div>
-          <p class="hint" style="margin-top:10px">The agent view auto-syncs the Calculator's messages field.</p>
+          <p class="hint" style="margin-top:10px">The agent view auto-syncs the Calculator's Copilot credits field.</p>
         </section>
       </div>
     </section>
